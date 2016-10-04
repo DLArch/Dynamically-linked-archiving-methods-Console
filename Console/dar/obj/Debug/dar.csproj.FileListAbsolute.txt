@@ -1,0 +1,2 @@
+C:\Users\Oleg\Documents\GitHub\dar\dar\bin\Debug\dar.exe.config
+C:\Users\Oleg\Documents\GitHub\Dynamically linked archiving methods(Console)\Console\dar\bin\Debug\dar.exe.config
