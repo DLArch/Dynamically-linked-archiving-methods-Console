@@ -1,2 +1,8 @@
 C:\Users\Oleg\Documents\GitHub\dar\dar\bin\Debug\dar.exe.config
 C:\Users\Oleg\Documents\GitHub\Dynamically linked archiving methods(Console)\Console\dar\bin\Debug\dar.exe.config
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods(Console)\Console\dar\bin\Debug\dar.exe.config
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods(Console)\Console\dar\bin\Debug\dar.exe
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods(Console)\Console\dar\bin\Debug\dar.pdb
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods(Console)\Console\dar\obj\Debug\dar.exe
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods(Console)\Console\dar\obj\Debug\dar.pdb
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods(Console)\Console\dar\obj\Debug\dar.csprojResolveAssemblyReference.cache
