@@ -27,6 +27,11 @@ namespace ar
                 Rules();
             }
         }
+        void arHelpWanted()
+        {
+            Console.WriteLine("Zipping - ar:");
+            Console.WriteLine("[PathBase] [PathDest]");
+        }
         static void Rules()
         {
             char razd = '"';

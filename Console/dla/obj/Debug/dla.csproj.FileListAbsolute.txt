@@ -1,0 +1,7 @@
+C:\Users\Oleg\Desktop\C\Lab4\On C#\dla\bin\Debug\dla.exe.config
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console-Main\Console\dla\bin\Debug\dla.exe.config
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console-Main\Console\dla\bin\Debug\dla.exe
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console-Main\Console\dla\bin\Debug\dla.pdb
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console-Main\Console\dla\obj\Debug\dla.csprojResolveAssemblyReference.cache
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console-Main\Console\dla\obj\Debug\dla.exe
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console-Main\Console\dla\obj\Debug\dla.pdb

@@ -27,6 +27,11 @@ namespace dar
                 Rules();
             }
         }
+        void darHelpWanted()
+        {
+            Console.WriteLine("Unzipping - dar:");
+            Console.WriteLine("[PathBase] [PathDest]");
+        }
         static void Rules()
         {
             char razd = '"';
