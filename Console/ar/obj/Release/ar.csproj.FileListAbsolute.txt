@@ -1,0 +1,5 @@
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\ar\bin\Release\ar.exe.config
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\ar\bin\Release\ar.exe
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\ar\bin\Release\ar.pdb
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\ar\obj\Release\ar.exe
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\ar\obj\Release\ar.pdb

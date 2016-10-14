@@ -1,0 +1,5 @@
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\dla\bin\Release\dla.exe.config
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\dla\bin\Release\dla.exe
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\dla\bin\Release\dla.pdb
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\dla\obj\Release\dla.exe
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\dla\obj\Release\dla.pdb
