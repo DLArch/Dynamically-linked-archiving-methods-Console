@@ -10,33 +10,29 @@ namespace dar
     {
         static void Main(string[] args)
         {
-            Console.Write("");
             if (args.Count() == 2)
             {
-                if (System.IO.File.Exists(args[0]) && (!(System.IO.File.Exists(args[1]))))
+                ///Разархивирует файл 1 в папку 2
+                if (System.IO.File.Exists(args[0]))
                 {
                     System.IO.Directory.CreateDirectory(args[1]);
                 }
                 else
                 {
-                    Rules();
+                    darHelpWanted();
                 }
             }
             else
             {
-                Rules();
+                darHelpWanted();
             }
         }
-        void darHelpWanted()
+        static void darHelpWanted()
         {
             Console.WriteLine("Unzipping - dar:");
-            Console.WriteLine("[PathBase] [PathDest]");
-        }
-        static void Rules()
-        {
-            char razd = '"';
-            Console.WriteLine("Uncorrect: ");
-            Console.WriteLine("dar [" + razd + "Path" + razd + "] [" + razd + "Path" + razd + "]");
+            Console.WriteLine("[FileBase] [PathDest]");
+            Console.WriteLine("Unzip file [FileBase] into directory [PathDest]");
+            Console.WriteLine("Разархивирует содержимое файла [FileBase] в папку [PathDest]");
         }
     }
 }

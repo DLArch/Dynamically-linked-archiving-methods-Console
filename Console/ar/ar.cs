@@ -10,33 +10,29 @@ namespace ar
     {
         static void Main(string[] args)
         {
-            Console.Write("");
             if (args.Count() == 2)
             {
-                if (System.IO.File.Exists(args[0]) && (!(System.IO.File.Exists(args[1]))))
+                ///Архивирует файл/папку 1 в файл 2
+                if (System.IO.File.Exists(args[0]) || System.IO.Directory.Exists(args[0]))
                 {
-                    System.IO.Directory.CreateDirectory(args[1]);
+                    System.IO.File.Create(args[1]);
                 }
                 else
                 {
-                    Rules();
+                    arHelpWanted();
                 }
             }
             else
             {
-                Rules();
+                arHelpWanted();
             }
         }
-        void arHelpWanted()
+        static void arHelpWanted()
         {
             Console.WriteLine("Zipping - ar:");
             Console.WriteLine("[PathBase] [PathDest]");
-        }
-        static void Rules()
-        {
-            char razd = '"';
-            Console.WriteLine("Uncorrect: ");
-            Console.WriteLine("ar [" + razd + "Path" + razd + "] [" + razd + "Path" + razd + "]");
+            Console.WriteLine("Zip Folder/File [PathBase] into archive [PathDest]");
+            Console.WriteLine("Упаковывает папку/файл [PathBase] в архив [PathDest]");
         }
     }
 }
