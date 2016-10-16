@@ -8,10 +8,24 @@ namespace ar
 {
     public class Archive_creator
     {
-        public Archive_creator(string Spath, string Apath, string Method)
+        /// <summary>
+        /// Создает новый архив
+        /// </summary>
+        /// <param name="Spath"></param>
+        /// <param name="Apath"></param>
+        /// <param name="Method"></param>
+        public Archive_creator(string Spath, string Apath = @"%Desctop%\Arch0.dla", int Method = 0)
         {
-            System.Console.WriteLine(Count_Of_Files(Spath));
-            Create_Archive(Spath, Apath);
+            init(Apath);
+            Create_Archive(Spath);
+        }
+        /// <summary>
+        /// Инициализирует поля класса
+        /// </summary>
+        /// <param name="path"></param>
+        private void init(string path)
+        {
+            this.ArchPath = string.Concat(path.Except(path.Split('.')[path.Split('.').Length - 1])) + Archive_creator.Extension;
         }
         /// <summary>
         /// Подсчитывает количиство каталогов в указанной папке
@@ -25,9 +39,16 @@ namespace ar
             {
                 foreach (var e in System.IO.Directory.EnumerateFileSystemEntries(path))
                 {
-                    if (System.IO.Directory.Exists(e))
+                    try
                     {
-                        Count_Of_Files_ += Count_Of_Files(e);
+                        if (System.IO.Directory.Exists(e))
+                        {
+                            Count_Of_Files_ += Count_Of_Files(e);
+                        }
+                    }
+                    catch
+                    {
+
                     }
                     ++Count_Of_Files_;
                 }
@@ -39,17 +60,28 @@ namespace ar
         /// </summary>
         /// <param name="Spath"></param>
         /// <param name="Apath"></param>
-        private void Create_Archive(string Spath, string Apath)
+        private void Create_Archive(string Spath)
         {
-            Apath = string.Concat(Apath.TakeWhile(x => x != '.')) + @".dla";
-            System.IO.FileStream CreatedFile = System.IO.File.Create(Apath);
+            System.IO.FileStream CreatedFile = System.IO.File.Create(this.ArchPath);
 
-            System.IO.File.SetAttributes(Apath, System.IO.File.GetAttributes(Apath) | System.IO.FileAttributes.Archive | System.IO.FileAttributes.ReparsePoint | System.IO.FileAttributes.Compressed);
+            System.IO.File.SetAttributes(this.ArchPath, System.IO.File.GetAttributes(this.ArchPath) | System.IO.FileAttributes.Archive | System.IO.FileAttributes.ReparsePoint | System.IO.FileAttributes.Compressed);
 
             CreatedFile.Close();
-            System.IO.StreamWriter OStream = new System.IO.StreamWriter(Apath);
+            System.IO.StreamWriter OStream = new System.IO.StreamWriter(this.ArchPath);
             OStream.Write(Count_Of_Files(Spath) + 1);
             OStream.Close();
+        }
+        /// <summary>
+        /// Расширение для архива
+        /// </summary>
+        public const string Extension = @".dla";
+        /// <summary>
+        /// Путь к архиву
+        /// </summary>
+        public string ArchPath
+        {
+            get;
+            set;
         }
     }
 }

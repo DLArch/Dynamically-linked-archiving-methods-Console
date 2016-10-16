@@ -15,7 +15,7 @@ namespace ar
                 ///Архивирует файл/папку 1 в файл 2
                 if (System.IO.File.Exists(args[0]) || System.IO.Directory.Exists(args[0]))
                 {
-                    Archive_creator Archive = new Archive_creator(args[0], args[1], args[2]);
+                    Archive_creator Archive = new Archive_creator(args[0], args[1], int.Parse(args[2]));
                 }
                 else
                 {
