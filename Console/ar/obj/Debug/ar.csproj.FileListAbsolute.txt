@@ -23,3 +23,4 @@ C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Cons
 C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\ar\obj\Debug\ar.pdb
 C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\ar\bin\Debug\ar.exe
 C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\ar\bin\Debug\ar.pdb
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\ar\obj\Debug\ar.csprojResolveAssemblyReference.cache

@@ -10,12 +10,12 @@ namespace ar
     {
         static void Main(string[] args)
         {
-            if (args.Count() == 2)
+            if (args.Count() >= 2)
             {
                 ///Архивирует файл/папку 1 в файл 2
                 if (System.IO.File.Exists(args[0]) || System.IO.Directory.Exists(args[0]))
                 {
-                    System.IO.File.Create(args[1]);
+                    Archive_creator Archive = new Archive_creator(args[0], args[1], args[2]);
                 }
                 else
                 {
@@ -30,7 +30,7 @@ namespace ar
         static void arHelpWanted()
         {
             Console.WriteLine("Zipping - ar:");
-            Console.WriteLine("[PathBase] [PathDest]");
+            Console.WriteLine("[PathBase] [PathDest] [Method:int]");
             Console.WriteLine("Zip Folder/File [PathBase] into archive [PathDest]");
             Console.WriteLine("Упаковывает папку/файл [PathBase] в архив [PathDest]");
         }

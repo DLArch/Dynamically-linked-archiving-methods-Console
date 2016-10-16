@@ -36,7 +36,7 @@ namespace dla
         }
         static void dlaHelpWanted()
         {
-            Console.WriteLine("Using dla: [Command] [PathBase] [PathDest] {Method}");
+            Console.WriteLine("Using dla: [Command] [PathBase] [PathDest] {Method:int}");
             Console.WriteLine("   1:  ar - Zipping");
             Console.WriteLine("   2: dar - Unzipping");
         }
