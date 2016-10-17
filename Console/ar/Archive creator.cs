@@ -14,18 +14,19 @@ namespace ar
         /// <param name="Spath"></param>
         /// <param name="Apath"></param>
         /// <param name="Method"></param>
-        public Archive_creator(string Spath, string Apath = @"%Desctop%\Arch0.dla", int Method = 0)
+        public Archive_creator(string Spath, string Apath = @"%Desctop%\Arch0.dla", UInt16 Method = 0)
         {
-            init(Apath);
+            init(Apath, Method);
             Create_Archive(Spath);
         }
         /// <summary>
         /// Инициализирует поля класса
         /// </summary>
         /// <param name="path"></param>
-        private void init(string path)
+        private void init(string path, UInt16 method)
         {
             this.ArchPath = string.Concat(path.Except(path.Split('.')[path.Split('.').Length - 1])) + Archive_creator.Extension;
+            this.MethodIndex = method;
         }
         /// <summary>
         /// Подсчитывает количиство каталогов в указанной папке
@@ -68,8 +69,52 @@ namespace ar
 
             CreatedFile.Close();
             System.IO.StreamWriter OStream = new System.IO.StreamWriter(this.ArchPath);
+            /// Запись количества файлов в архив
             OStream.Write(Count_Of_Files(Spath) + 1);
             OStream.Close();
+
+            System.IO.FileStream StreamOfCreatedFile = new System.IO.FileStream(this.ArchPath, System.IO.FileMode.Append, System.IO.FileAccess.Write);
+            System.IO.BinaryWriter BinFileWriter = new System.IO.BinaryWriter(StreamOfCreatedFile);
+
+            BinFileWriter.Write(this.MethodIndex);
+
+            Compress(Spath, BinFileWriter);
+        }
+        private void Compress(string path, System.IO.BinaryWriter BinFileWriter)
+        {
+            if (System.IO.File.Exists(path))
+            {
+                byte[] buff;
+
+                System.IO.FileStream StreamOfBaseFile;
+
+                try
+                {
+                    StreamOfBaseFile = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read);//)
+                }
+                catch
+                {
+                    return;
+                }
+
+                buff = new byte[StreamOfBaseFile.Length];
+                StreamOfBaseFile.ReadAsync(buff, 0, (int)StreamOfBaseFile.Length);
+
+                BinFileWriter.BaseStream.WriteAsync(buff, 0, buff.Length);
+                Console.WriteLine(this.MethodIndex);
+
+                foreach (var z in buff)
+                {
+                    Console.Write(z);
+                }
+            }
+            else
+            {
+                foreach (var x in System.IO.Directory.EnumerateFileSystemEntries(path))
+                {
+                    Compress(x, BinFileWriter);
+                }
+            }
         }
         /// <summary>
         /// Расширение для архива
@@ -79,6 +124,11 @@ namespace ar
         /// Путь к архиву
         /// </summary>
         public string ArchPath
+        {
+            get;
+            set;
+        }
+        public UInt16 MethodIndex
         {
             get;
             set;
