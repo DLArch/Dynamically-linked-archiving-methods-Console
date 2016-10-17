@@ -90,7 +90,7 @@ namespace ar
 
                 try
                 {
-                    StreamOfBaseFile = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read);//)
+                    StreamOfBaseFile = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read);
                 }
                 catch
                 {
@@ -101,11 +101,35 @@ namespace ar
                 StreamOfBaseFile.ReadAsync(buff, 0, (int)StreamOfBaseFile.Length);
 
                 BinFileWriter.BaseStream.WriteAsync(buff, 0, buff.Length);
-                Console.WriteLine(this.MethodIndex);
 
+                Console.WriteLine((byte)new System.IO.FileInfo(path).Attributes);
+                Console.WriteLine("-------------");
+                foreach (var z in System.IO.File.ReadAllLines(path))
+                {
+                    Console.WriteLine(z);
+                }
+                Console.WriteLine("-------------");
+
+                var ForTests = true;
+                var OneHex = 0;
                 foreach (var z in buff)
                 {
+                    if (ForTests)
+                    {
+                        Console.Write(' ');
+                    }
                     Console.Write(z);
+                    ForTests = !ForTests;
+                    if (OneHex >= (16 -1))
+                    {
+                        OneHex = 0;
+                        Console.Write("||");
+                        ForTests = true;
+                    }
+                    else
+                    {
+                        ++OneHex;
+                    }
                 }
             }
             else
