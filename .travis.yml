@@ -1,0 +1,4 @@
+language: csharp
+solution: ./Console/Console.sln
+script:
+  - xbuild ./Console/Console.sln
