@@ -1,3 +1,4 @@
 language: csharp
-solution: Console.sln
-os: "Windows"
+solution: ./Console/Console.sln
+script:
+  - xbuild ./Console/Console.sln
