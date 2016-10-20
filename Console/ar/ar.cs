@@ -16,21 +16,26 @@ namespace ar
                 if (System.IO.File.Exists(args[0]) || System.IO.Directory.Exists(args[0]))
                 {
                     Archive_creator Archive;
-                    switch (args.Count())
+                    System.Threading.Tasks.Task Methods = new System.Threading.Tasks.Task(() =>
                     {
-                        case 1:
-                            Archive = new Archive_creator(args[0]);
-                            break;
-                        case 2:
-                            Archive = new Archive_creator(args[0], args[1]);
-                            break;
-                        case 3:
-                            Archive = new Archive_creator(args[0], args[1], UInt16.Parse(args[2]));
-                            break;
-                        default:
-                            arHelpWanted();
-                            break;
-                    }
+                        switch (args.Count())
+                        {
+                            case 1:
+                                Archive = new Archive_creator(args[0]);
+                                break;
+                            case 2:
+                                Archive = new Archive_creator(args[0], args[1]);
+                                break;
+                            case 3:
+                                Archive = new Archive_creator(args[0], args[1], UInt16.Parse(args[2]));
+                                break;
+                            default:
+                                arHelpWanted();
+                                break;
+                        }
+                    });
+                    Methods.Start();
+                    Methods.Wait();
                 }
                 else
                 {

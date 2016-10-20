@@ -16,7 +16,6 @@ namespace ar
         /// <param name="Method"></param>
         public Archive_creator(string Spath, string Apath = @"789987", UInt16 Method = 0)
         {
-            Console.WriteLine(Apath);
             init(Apath, Method);
             Create_Archive(Spath);
         }
@@ -38,7 +37,6 @@ namespace ar
             if (path == "789987")
             {
                 path = System.Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + System.IO.Path.DirectorySeparatorChar + @"Arch0.dla";
-                Console.WriteLine(path);
             }
             this.ArchPath = string.Concat(path.Take(path.Length - (string.Concat(path.Reverse().TakeWhile(x => x != '.')) + '.').Length)) + Archive_creator.Extension;
             this.MethodIndex = method;
@@ -127,7 +125,7 @@ namespace ar
 
             if (System.IO.File.Exists(path))
             {
-                byte[] buff;
+                //byte[] buff;
 
                 System.IO.FileStream StreamOfBaseFile;
 
@@ -163,6 +161,10 @@ namespace ar
                     }
                 }
 
+
+                /// <summary>
+                /// TODO: Писать родительскую папку, конкретную папку. (Для разархивации, чтобы настроить переходы...) + не пишутся папки.
+                /// </summary>
                 System.IO.FileInfo FileAttrib = new System.IO.FileInfo(path);
                 BinFileWriter.Write(this.MethodIndex);
                 BinFileWriter.Write('|' + ((int)FileAttrib.Attributes).ToString() + '|');
@@ -181,27 +183,39 @@ namespace ar
                 //BinFileWriter.Write(FileAttrib.LastAccessTimeUtc.ToString() + '|');
                 //BinFileWriter.Write(FileAttrib.LastWriteTimeUtc.ToString() + '|');
 
-                buff = new byte[StreamOfBaseFile.Length];
+                //buff = new byte[StreamOfBaseFile.Length];
 
-                List<Task> Tasks;
+                //List<Task> Tasks;
 
-                Tasks = new List<Task>();
+                //Tasks = new List<Task>();
 
-                Console.WriteLine((byte)new System.IO.FileInfo(path).Attributes);
+                /*Console.WriteLine((byte)new System.IO.FileInfo(path).Attributes);
                 Console.WriteLine("-------------");
                 foreach (var z in System.IO.File.ReadAllLines(path))
                 {
                     Console.WriteLine(z);
                 }
-                Console.WriteLine("-------------");
+                Console.WriteLine("-------------");*/
 
-                StreamOfBaseFile.Read(buff, 0, (int)StreamOfBaseFile.Length);
-                BinFileWriter.Write(buff);
+                /// <summary>
+                /// Чтение файла из потока StreamOfBaseFile
+                /// TODO: Ускорить чтение, путем чтения не одного байта, а набора байтов сразу
+                /// Количество выделяемых байт под буффер должно определяться автоматически,
+                /// в зависимости от количества доступной оперативной памяти
+                /// </summary>
 
-                foreach (var z in buff)
+                byte Byte_Buff;
+
+                for (Byte_Buff = 0; StreamOfBaseFile.Position < StreamOfBaseFile.Length;)
+                {
+                    Byte_Buff = (byte)StreamOfBaseFile.ReadByte();
+                    BinFileWriter.Write(Byte_Buff);
+                }
+                
+                /*foreach (var z in buff)
                 {
                     Console.Write(z.ToString() + '|');
-                }
+                }*/
             }
             else
             {
