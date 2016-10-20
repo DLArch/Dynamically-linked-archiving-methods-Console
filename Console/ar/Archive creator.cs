@@ -14,12 +14,13 @@ namespace ar
         /// <param name="Spath"></param>
         /// <param name="Apath"></param>
         /// <param name="Method"></param>
-        public Archive_creator(string Spath, string Apath = @"%Desctop%\Arch0.dla", UInt16 Method = 0)
+        public Archive_creator(string Spath, string Apath = @"789987", UInt16 Method = 0)
         {
+            Console.WriteLine(Apath);
             init(Apath, Method);
             Create_Archive(Spath);
         }
-        public Archive_creator(string Spath, System.IO.BinaryWriter Wr, string Apath = @"%Desctop%\Arch0.dla", UInt16 Method = 0)
+        public Archive_creator(string Spath, System.IO.BinaryWriter Wr, string Apath = "789987", UInt16 Method = 0)
         {
             this.ArchPath = Apath;
             this.MethodIndex = Method;
@@ -34,7 +35,14 @@ namespace ar
         /// <param name="path"></param>
         private void init(string path, UInt16 method)
         {
-            this.ArchPath = string.Concat(path.Except(path.Split('.')[path.Split('.').Length - 1])) + Archive_creator.Extension;
+            if (path == "789987")
+            {
+                path = System.Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + System.IO.Path.DirectorySeparatorChar + @"Arch0.dla";
+                Console.WriteLine(path);
+            }
+            this.ArchPath = string.Concat(path.Take(path.Length - (string.Concat(path.Reverse().TakeWhile(x => x != '.')) + '.').Length)) + Archive_creator.Extension;
+            Console.WriteLine(this.ArchPath);
+            Console.ReadKey();
             this.MethodIndex = method;
         }
         /// <summary>
@@ -85,7 +93,7 @@ namespace ar
             System.IO.FileStream StreamOfCreatedFile = new System.IO.FileStream(this.ArchPath, System.IO.FileMode.Append, System.IO.FileAccess.Write);
             System.IO.BinaryWriter BinFileWriter = new System.IO.BinaryWriter(StreamOfCreatedFile);
 
-            BinFileWriter.Write(this.MethodIndex);
+            //BinFileWriter.Write(this.MethodIndex);
 
             Compress(Spath, BinFileWriter);
         }
@@ -97,7 +105,7 @@ namespace ar
                 System.IO.FileStream StreamOfLogFile = new System.IO.FileStream(Archive_creator.Log, System.IO.FileMode.Append, System.IO.FileAccess.Write);
                 var BuffStream = new System.IO.BinaryWriter(StreamOfLogFile);
                 BuffStream.Write(path.ToCharArray());
-                BuffStream.Write('\0');
+                BuffStream.Write(Environment.NewLine);
                 BuffStream.Close();
                 StreamOfLogFile.Close();
             }
@@ -125,17 +133,16 @@ namespace ar
                         {
                             System.IO.FileStream StreamOfLogFile = new System.IO.FileStream(Archive_creator.Log, System.IO.FileMode.Append, System.IO.FileAccess.Write);
                             var BuffStream = new System.IO.BinaryWriter(StreamOfLogFile);
-                            BuffStream.Write("Except of access to file:" + path);
-                            BuffStream.Write(path.ToCharArray());
-                            BuffStream.Write('\0');
+                            BuffStream.Write(" |!!!Except of access to file: " + path + "!!!|");
+                            BuffStream.Write(Environment.NewLine);
                             BuffStream.Close();
                             StreamOfLogFile.Close();
                         }
                         catch
                         {
-                            ;
+                            Console.WriteLine("Невозможно записать событие");
                         }
-                        Console.WriteLine("Невозможно получить доступ к: ", path);
+                        Console.WriteLine("Невозможно получить доступ к файлу: " + path);
                         Console.WriteLine("Продолжить работы с ошибкой [y/n]");
                         if (Console.ReadKey().KeyChar == 'y' || Console.ReadKey().KeyChar == 'Y')
                         {
@@ -151,6 +158,15 @@ namespace ar
                 {
                     return;
                 }
+                
+                System.IO.FileInfo FileAttrib = new System.IO.FileInfo(path);
+                BinFileWriter.Write(this.MethodIndex);
+                BinFileWriter.Write('|' + FileAttrib.DirectoryName + '|');
+                BinFileWriter.Write(FileAttrib.Name + '|');
+                BinFileWriter.Write(FileAttrib.Attributes.ToString() + '|');
+                BinFileWriter.Write(FileAttrib.LastAccessTimeUtc.ToString() + '|');
+                BinFileWriter.Write(FileAttrib.LastWriteTimeUtc.ToString() + '|');
+                BinFileWriter.Write(FileAttrib.Length.ToString() + '|');
 
                 buff = new byte[StreamOfBaseFile.Length];
 
@@ -177,11 +193,12 @@ namespace ar
                 StreamOfBaseFile.ReadAsync(buff, 0, (int)StreamOfBaseFile.Length);
                 BinFileWriter.BaseStream.WriteAsync(buff, 0, buff.Length);
 
-                var ForTests = true;
-                var OneHex = 0;
+                /*var ForTests = true;
+                var OneHex = 0;*/
                 foreach (var z in buff)
                 {
-                    if (ForTests)
+                    Console.Write(z.ToString() + '|');
+                    /*if (ForTests)
                     {
                         Console.Write(' ');
                     }
@@ -196,7 +213,7 @@ namespace ar
                     else
                     {
                         ++OneHex;
-                    }
+                    }*/
                 }
             }
             else
