@@ -41,8 +41,6 @@ namespace ar
                 Console.WriteLine(path);
             }
             this.ArchPath = string.Concat(path.Take(path.Length - (string.Concat(path.Reverse().TakeWhile(x => x != '.')) + '.').Length)) + Archive_creator.Extension;
-            Console.WriteLine(this.ArchPath);
-            Console.ReadKey();
             this.MethodIndex = method;
         }
         /// <summary>
@@ -96,7 +94,15 @@ namespace ar
             //BinFileWriter.Write(this.MethodIndex);
 
             Compress(Spath, BinFileWriter);
+
+            BinFileWriter.Close();
+            StreamOfCreatedFile.Close();
         }
+        /// <summary>
+        /// Сжимает папку/файл
+        /// </summary>
+        /// <param name="path"> Путь к файлу, который необходимо сжать </param>
+        /// <param name="BinFileWriter"> Поток записи для архива </param>
         private void Compress(string path, System.IO.BinaryWriter BinFileWriter)
         {
 
@@ -114,6 +120,10 @@ namespace ar
                 ;
             }
 
+            if (path == this.ArchPath || path == (AppDomain.CurrentDomain.BaseDirectory + this.ArchPath))
+            {
+                return;
+            }
 
             if (System.IO.File.Exists(path))
             {
@@ -121,64 +131,61 @@ namespace ar
 
                 System.IO.FileStream StreamOfBaseFile;
 
-                if (path != this.ArchPath)
+                try
+                {
+                    StreamOfBaseFile = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read);
+                }
+                catch
                 {
                     try
                     {
-                        StreamOfBaseFile = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read);
+                        System.IO.FileStream StreamOfLogFile = new System.IO.FileStream(Archive_creator.Log, System.IO.FileMode.Append, System.IO.FileAccess.Write);
+                        var BuffStream = new System.IO.BinaryWriter(StreamOfLogFile);
+                        BuffStream.Write(" |!!!Except of access to file: " + path + "!!!|");
+                        BuffStream.Write(Environment.NewLine);
+                        BuffStream.Close();
+                        StreamOfLogFile.Close();
                     }
                     catch
                     {
-                        try
-                        {
-                            System.IO.FileStream StreamOfLogFile = new System.IO.FileStream(Archive_creator.Log, System.IO.FileMode.Append, System.IO.FileAccess.Write);
-                            var BuffStream = new System.IO.BinaryWriter(StreamOfLogFile);
-                            BuffStream.Write(" |!!!Except of access to file: " + path + "!!!|");
-                            BuffStream.Write(Environment.NewLine);
-                            BuffStream.Close();
-                            StreamOfLogFile.Close();
-                        }
-                        catch
-                        {
-                            Console.WriteLine("Невозможно записать событие");
-                        }
-                        Console.WriteLine("Невозможно получить доступ к файлу: " + path);
-                        Console.WriteLine("Продолжить работы с ошибкой [y/n]");
-                        if (Console.ReadKey().KeyChar == 'y' || Console.ReadKey().KeyChar == 'Y')
-                        {
-                            return;
-                        }
-                        else
-                        {
-                            throw new Exception("Программа остановлена по запросу пользователя");
-                        }
+                        Console.WriteLine("Невозможно записать событие");
+                    }
+                    Console.WriteLine("Невозможно получить доступ к файлу: " + path);
+                    Console.WriteLine("Продолжить работы с ошибкой [y/n]");
+                    var KeyPressed = Console.ReadKey().KeyChar;
+                    if (KeyPressed == 'y' || KeyPressed == 'Y')
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        throw new Exception("Программа остановлена по запросу пользователя");
                     }
                 }
-                else
-                {
-                    return;
-                }
-                
+
                 System.IO.FileInfo FileAttrib = new System.IO.FileInfo(path);
                 BinFileWriter.Write(this.MethodIndex);
-                BinFileWriter.Write('|' + FileAttrib.DirectoryName + '|');
+                BinFileWriter.Write('|' + ((int)FileAttrib.Attributes).ToString() + '|');
+                BinFileWriter.Write(FileAttrib.CreationTime.ToString() + '|');
+                BinFileWriter.Write(FileAttrib.LastAccessTime.ToString() + '|');
+                BinFileWriter.Write(FileAttrib.LastWriteTime.ToString() + '|');
                 BinFileWriter.Write(FileAttrib.Name + '|');
-                BinFileWriter.Write(FileAttrib.Attributes.ToString() + '|');
-                BinFileWriter.Write(FileAttrib.LastAccessTimeUtc.ToString() + '|');
-                BinFileWriter.Write(FileAttrib.LastWriteTimeUtc.ToString() + '|');
                 BinFileWriter.Write(FileAttrib.Length.ToString() + '|');
+                //BinFileWriter.Write(FileAttrib.FullName + '|');
+                //BinFileWriter.Write(FileAttrib.Extension + '|');
+                //BinFileWriter.Write(FileAttrib.CreationTimeUtc.ToString() + '|');
+                //BinFileWriter.Write(FileAttrib.Directory.ToString() + '|');
+                //BinFileWriter.Write(FileAttrib.DirectoryName + '|');
+                //BinFileWriter.Write(FileAttrib.Exists.ToString() + '|');
+                //BinFileWriter.Write(FileAttrib.IsReadOnly.ToString() + '|');
+                //BinFileWriter.Write(FileAttrib.LastAccessTimeUtc.ToString() + '|');
+                //BinFileWriter.Write(FileAttrib.LastWriteTimeUtc.ToString() + '|');
 
                 buff = new byte[StreamOfBaseFile.Length];
 
                 List<Task> Tasks;
 
                 Tasks = new List<Task>();
-                /// Не хочет работать :(
-                /*Tasks.Add(new System.Threading.Tasks.TaskFactory().StartNew(() =>
-                {
-                    StreamOfBaseFile.ReadAsync(buff, 0, (int)StreamOfBaseFile.Length);
-                    BinFileWriter.BaseStream.WriteAsync(buff, 0, buff.Length);
-                }));*/
 
                 Console.WriteLine((byte)new System.IO.FileInfo(path).Attributes);
                 Console.WriteLine("-------------");
@@ -188,32 +195,12 @@ namespace ar
                 }
                 Console.WriteLine("-------------");
 
-                // -- Task.WaitAll(Tasks.ToArray());
+                StreamOfBaseFile.Read(buff, 0, (int)StreamOfBaseFile.Length);
+                BinFileWriter.Write(buff);
 
-                StreamOfBaseFile.ReadAsync(buff, 0, (int)StreamOfBaseFile.Length);
-                BinFileWriter.BaseStream.WriteAsync(buff, 0, buff.Length);
-
-                /*var ForTests = true;
-                var OneHex = 0;*/
                 foreach (var z in buff)
                 {
                     Console.Write(z.ToString() + '|');
-                    /*if (ForTests)
-                    {
-                        Console.Write(' ');
-                    }
-                    Console.Write(z);
-                    ForTests = !ForTests;
-                    if (OneHex >= (16 -1))
-                    {
-                        OneHex = 0;
-                        Console.Write("||");
-                        ForTests = true;
-                    }
-                    else
-                    {
-                        ++OneHex;
-                    }*/
                 }
             }
             else
