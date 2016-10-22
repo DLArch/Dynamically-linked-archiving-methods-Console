@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ar
 {
@@ -11,15 +8,15 @@ namespace ar
         /// <summary>
         /// Создает новый архив
         /// </summary>
-        /// <param name="Spath"></param>
-        /// <param name="Apath"></param>
-        /// <param name="Method"></param>
-        public Archive_creator(string Spath, string Apath = @"%Desctop%\Arch0.dla", UInt16 Method = 0)
+        /// <param name="Spath"> Путь к файлам для архивации </param>
+        /// <param name="Apath"> Путь к архиву </param>
+        /// <param name="Method"> Номер метода для файлов </param>
+        public Archive_creator(string Spath, string Apath = @"789987", UInt16 Method = 0)
         {
             init(Apath, Method);
             Create_Archive(Spath);
         }
-        public Archive_creator(string Spath, System.IO.BinaryWriter Wr, string Apath = @"%Desctop%\Arch0.dla", UInt16 Method = 0)
+        public Archive_creator(string Spath, System.IO.BinaryWriter Wr, string Apath = "789987", UInt16 Method = 0)
         {
             this.ArchPath = Apath;
             this.MethodIndex = Method;
@@ -31,17 +28,28 @@ namespace ar
         /// <summary>
         /// Инициализирует поля класса
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="path"> Путь для инициализации класса </param>
+        /// <param name="method"> Номер метода для файлов </param>
         private void init(string path, UInt16 method)
         {
-            this.ArchPath = string.Concat(path.Except(path.Split('.')[path.Split('.').Length - 1])) + Archive_creator.Extension;
+            if (path == "789987")
+            {
+                path = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + System.IO.Path.DirectorySeparatorChar + Archive_creator.DefaultArchiveName;
+            }
+            if (path.Where(x => x == DefaultExtensionDelimiter).Count() != 0)
+            {
+                this.ArchPath = string.Concat(path.Take(path.Length - (string.Concat(path.Reverse().TakeWhile(x => x != DefaultExtensionDelimiter)) + DefaultExtensionDelimiter).Length)) + Archive_creator.Extension;
+            }
+            else
+            {
+                this.ArchPath += Archive_creator.Extension;
+            }
             this.MethodIndex = method;
         }
         /// <summary>
-        /// Подсчитывает количиство каталогов в указанной папке
+        /// Подсчитывает количиство файлов в указанной папке
         /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
+        /// <param name="path"> Путь к папке/файлам для подсчета </param>
         private int Count_Of_Files(string path)
         {
             int Count_Of_Files_ = 0;
@@ -68,8 +76,7 @@ namespace ar
         /// <summary>
         /// Создает и заполняет архивный файл
         /// </summary>
-        /// <param name="Spath"></param>
-        /// <param name="Apath"></param>
+        /// <param name="Spath"> Путь к папке/файлам для архивации </param>
         private void Create_Archive(string Spath)
         {
             System.IO.FileStream CreatedFile = System.IO.File.Create(this.ArchPath);
@@ -77,27 +84,29 @@ namespace ar
             System.IO.File.SetAttributes(this.ArchPath, System.IO.File.GetAttributes(this.ArchPath) | System.IO.FileAttributes.Archive | System.IO.FileAttributes.ReparsePoint | System.IO.FileAttributes.Compressed);
 
             CreatedFile.Close();
-            System.IO.StreamWriter OStream = new System.IO.StreamWriter(this.ArchPath);
-            /// Запись количества файлов в архив
-            OStream.Write(Count_Of_Files(Spath));
-            OStream.Close();
 
             System.IO.FileStream StreamOfCreatedFile = new System.IO.FileStream(this.ArchPath, System.IO.FileMode.Append, System.IO.FileAccess.Write);
             System.IO.BinaryWriter BinFileWriter = new System.IO.BinaryWriter(StreamOfCreatedFile);
 
-            BinFileWriter.Write(this.MethodIndex);
-
             Compress(Spath, BinFileWriter);
+
+            BinFileWriter.Close();
+            StreamOfCreatedFile.Close();
         }
+        /// <summary>
+        /// Сжимает папку/файл
+        /// </summary>
+        /// <param name="path"> Путь к файлу/папке, который[ую] необходимо сжать </param>
+        /// <param name="BinFileWriter"> Поток записи в архив </param>
         private void Compress(string path, System.IO.BinaryWriter BinFileWriter)
         {
 
             try
             {
-                System.IO.FileStream StreamOfLogFile = new System.IO.FileStream(Archive_creator.Log, System.IO.FileMode.Append, System.IO.FileAccess.Write);
+                System.IO.FileStream StreamOfLogFile = new System.IO.FileStream(Archive_creator.LogFileName, System.IO.FileMode.Append, System.IO.FileAccess.Write);
                 var BuffStream = new System.IO.BinaryWriter(StreamOfLogFile);
                 BuffStream.Write(path.ToCharArray());
-                BuffStream.Write('\0');
+                BuffStream.Write(Environment.NewLine);
                 BuffStream.Close();
                 StreamOfLogFile.Close();
             }
@@ -106,113 +115,114 @@ namespace ar
                 ;
             }
 
+            if (path == this.ArchPath || path == (AppDomain.CurrentDomain.BaseDirectory + this.ArchPath))
+            {
+                return;
+            }
 
             if (System.IO.File.Exists(path))
             {
-                byte[] buff;
-
                 System.IO.FileStream StreamOfBaseFile;
 
-                if (path != this.ArchPath)
+                try
+                {
+                    StreamOfBaseFile = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read);
+                }
+                catch
                 {
                     try
                     {
-                        StreamOfBaseFile = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read);
+                        System.IO.FileStream StreamOfLogFile = new System.IO.FileStream(Archive_creator.LogFileName, System.IO.FileMode.Append, System.IO.FileAccess.Write);
+                        var BuffStream = new System.IO.BinaryWriter(StreamOfLogFile);
+                        BuffStream.Write(" |!!!Except of access to file: " + path + "!!!|");
+                        BuffStream.Write(Environment.NewLine);
+                        BuffStream.Close();
+                        StreamOfLogFile.Close();
                     }
                     catch
                     {
-                        try
-                        {
-                            System.IO.FileStream StreamOfLogFile = new System.IO.FileStream(Archive_creator.Log, System.IO.FileMode.Append, System.IO.FileAccess.Write);
-                            var BuffStream = new System.IO.BinaryWriter(StreamOfLogFile);
-                            BuffStream.Write("Except of access to file:" + path);
-                            BuffStream.Write(path.ToCharArray());
-                            BuffStream.Write('\0');
-                            BuffStream.Close();
-                            StreamOfLogFile.Close();
-                        }
-                        catch
-                        {
-                            ;
-                        }
-                        Console.WriteLine("Невозможно получить доступ к: ", path);
-                        Console.WriteLine("Продолжить работы с ошибкой [y/n]");
-                        if (Console.ReadKey().KeyChar == 'y' || Console.ReadKey().KeyChar == 'Y')
-                        {
-                            return;
-                        }
-                        else
-                        {
-                            throw new Exception("Программа остановлена по запросу пользователя");
-                        }
+                        Console.WriteLine("Невозможно записать событие");
                     }
-                }
-                else
-                {
-                    return;
-                }
-
-                buff = new byte[StreamOfBaseFile.Length];
-
-                List<Task> Tasks;
-
-                Tasks = new List<Task>();
-                /// Не хочет работать :(
-                /*Tasks.Add(new System.Threading.Tasks.TaskFactory().StartNew(() =>
-                {
-                    StreamOfBaseFile.ReadAsync(buff, 0, (int)StreamOfBaseFile.Length);
-                    BinFileWriter.BaseStream.WriteAsync(buff, 0, buff.Length);
-                }));*/
-
-                Console.WriteLine((byte)new System.IO.FileInfo(path).Attributes);
-                Console.WriteLine("-------------");
-                foreach (var z in System.IO.File.ReadAllLines(path))
-                {
-                    Console.WriteLine(z);
-                }
-                Console.WriteLine("-------------");
-
-                // -- Task.WaitAll(Tasks.ToArray());
-
-                StreamOfBaseFile.ReadAsync(buff, 0, (int)StreamOfBaseFile.Length);
-                BinFileWriter.BaseStream.WriteAsync(buff, 0, buff.Length);
-
-                var ForTests = true;
-                var OneHex = 0;
-                foreach (var z in buff)
-                {
-                    if (ForTests)
+                    Console.WriteLine("Невозможно получить доступ к файлу: " + path);
+                    Console.WriteLine("Продолжить работы с ошибкой [y/n]");
+                    var KeyPressed = Console.ReadKey().KeyChar;
+                    if (KeyPressed == 'y' || KeyPressed == 'Y')
                     {
-                        Console.Write(' ');
-                    }
-                    Console.Write(z);
-                    ForTests = !ForTests;
-                    if (OneHex >= (16 -1))
-                    {
-                        OneHex = 0;
-                        Console.Write("||");
-                        ForTests = true;
+                        return;
                     }
                     else
                     {
-                        ++OneHex;
+                        throw new Exception("Программа остановлена по запросу пользователя");
                     }
+                }
+                
+                MakeFileInArchive(path, BinFileWriter);
+
+                /// <summary>
+                /// Чтение файла из потока StreamOfBaseFile
+                /// TODO: Ускорить чтение, путем чтения не одного байта, а набора байтов сразу
+                /// Количество выделяемых байт под буффер должно определяться автоматически,
+                /// в зависимости от количества доступной оперативной памяти
+                /// </summary>
+                byte Byte_Buff;
+
+                for (Byte_Buff = 0; StreamOfBaseFile.Position < StreamOfBaseFile.Length;)
+                {
+                    Byte_Buff = (byte)StreamOfBaseFile.ReadByte();
+                    BinFileWriter.Write(Byte_Buff);
                 }
             }
             else
             {
+                MakeFileInArchive(path, BinFileWriter);
                 new Archive_creator(path, BinFileWriter, this.ArchPath, this.MethodIndex);
-                //foreach (var x in System.IO.Directory.EnumerateFileSystemEntries(path))
-                //{
-                //    Compress(x, BinFileWriter);
-                //}
             }
         }
         /// <summary>
-        /// Расширение для архива
+        /// Записывает файловую запись в архив
+        /// </summary>
+        /// <param name="path"> Путь к файлу/папке, свединия о котором необходимо занести в архив </param>
+        /// <param name="BinFileWriter"> Поток записи в архив </param>
+        public void MakeFileInArchive(string path, System.IO.BinaryWriter BinFileWriter)
+        {
+            System.IO.FileInfo FileAttrib = new System.IO.FileInfo(path);
+            BinFileWriter.Write('|');
+            BinFileWriter.Write(this.MethodIndex);
+            BinFileWriter.Write('|');
+            BinFileWriter.Write((Int32)FileAttrib.Attributes);
+            BinFileWriter.Write('|');
+            BinFileWriter.Write(FileAttrib.CreationTime.ToBinary());
+            BinFileWriter.Write('|');
+            BinFileWriter.Write(FileAttrib.LastAccessTime.ToBinary());
+            BinFileWriter.Write('|');
+            BinFileWriter.Write(FileAttrib.LastWriteTime.ToBinary());
+            BinFileWriter.Write('|');
+            BinFileWriter.Write(FileAttrib.Name);
+            BinFileWriter.Write('|');
+            BinFileWriter.Write(FileAttrib.DirectoryName);
+            BinFileWriter.Write('|');
+            if (System.IO.File.Exists(path))
+            {
+                BinFileWriter.Write(FileAttrib.Length);
+                BinFileWriter.Write('|');
+            }
+        }
+        /// <summary>
+        /// Разделитель расширения
+        /// </summary>
+        public const char DefaultExtensionDelimiter = '.';
+        /// <summary>
+        /// Расширение архива
         /// </summary>
         public const string Extension = @".dla";
-        public const string Log = @"Log.dla";
+        /// <summary>
+        /// Путь и расширение log - файла
+        /// </summary>
+        public const string LogFileName = @"Log.dla";
+        /// <summary>
+        /// Стандартное название архива
+        /// </summary>
+        public const string DefaultArchiveName = @"Arch0.dla";
         /// <summary>
         /// Путь к архиву
         /// </summary>
@@ -221,6 +231,10 @@ namespace ar
             get;
             set;
         }
+        /// <summary>
+        /// Номер метода для сжатия. Если 0, система
+        /// автоматически определяет наиболее подходящий
+        /// </summary>
         public UInt16 MethodIndex
         {
             get;
