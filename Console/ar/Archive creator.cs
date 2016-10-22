@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ar
 {
@@ -11,9 +8,9 @@ namespace ar
         /// <summary>
         /// Создает новый архив
         /// </summary>
-        /// <param name="Spath"></param>
-        /// <param name="Apath"></param>
-        /// <param name="Method"></param>
+        /// <param name="Spath"> Путь к файлам для архивации </param>
+        /// <param name="Apath"> Путь к архиву </param>
+        /// <param name="Method"> Номер метода для файлов </param>
         public Archive_creator(string Spath, string Apath = @"789987", UInt16 Method = 0)
         {
             init(Apath, Method);
@@ -31,21 +28,28 @@ namespace ar
         /// <summary>
         /// Инициализирует поля класса
         /// </summary>
-        /// <param name="path"></param>
+        /// <param name="path"> Путь для инициализации класса </param>
+        /// <param name="method"> Номер метода для файлов </param>
         private void init(string path, UInt16 method)
         {
             if (path == "789987")
             {
-                path = System.Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + System.IO.Path.DirectorySeparatorChar + @"Arch0.dla";
+                path = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + System.IO.Path.DirectorySeparatorChar + Archive_creator.DefaultArchiveName;
             }
-            this.ArchPath = string.Concat(path.Take(path.Length - (string.Concat(path.Reverse().TakeWhile(x => x != '.')) + '.').Length)) + Archive_creator.Extension;
+            if (path.Where(x => x == DefaultExtensionDelimiter).Count() != 0)
+            {
+                this.ArchPath = string.Concat(path.Take(path.Length - (string.Concat(path.Reverse().TakeWhile(x => x != DefaultExtensionDelimiter)) + DefaultExtensionDelimiter).Length)) + Archive_creator.Extension;
+            }
+            else
+            {
+                this.ArchPath += Archive_creator.Extension;
+            }
             this.MethodIndex = method;
         }
         /// <summary>
-        /// Подсчитывает количиство каталогов в указанной папке
+        /// Подсчитывает количиство файлов в указанной папке
         /// </summary>
-        /// <param name="path"></param>
-        /// <returns></returns>
+        /// <param name="path"> Путь к папке/файлам для подсчета </param>
         private int Count_Of_Files(string path)
         {
             int Count_Of_Files_ = 0;
@@ -72,8 +76,7 @@ namespace ar
         /// <summary>
         /// Создает и заполняет архивный файл
         /// </summary>
-        /// <param name="Spath"></param>
-        /// <param name="Apath"></param>
+        /// <param name="Spath"> Путь к папке/файлам для архивации </param>
         private void Create_Archive(string Spath)
         {
             System.IO.FileStream CreatedFile = System.IO.File.Create(this.ArchPath);
@@ -81,15 +84,9 @@ namespace ar
             System.IO.File.SetAttributes(this.ArchPath, System.IO.File.GetAttributes(this.ArchPath) | System.IO.FileAttributes.Archive | System.IO.FileAttributes.ReparsePoint | System.IO.FileAttributes.Compressed);
 
             CreatedFile.Close();
-            System.IO.StreamWriter OStream = new System.IO.StreamWriter(this.ArchPath);
-            /// Запись количества файлов в архив
-            OStream.Write(Count_Of_Files(Spath));
-            OStream.Close();
 
             System.IO.FileStream StreamOfCreatedFile = new System.IO.FileStream(this.ArchPath, System.IO.FileMode.Append, System.IO.FileAccess.Write);
             System.IO.BinaryWriter BinFileWriter = new System.IO.BinaryWriter(StreamOfCreatedFile);
-
-            //BinFileWriter.Write(this.MethodIndex);
 
             Compress(Spath, BinFileWriter);
 
@@ -99,14 +96,14 @@ namespace ar
         /// <summary>
         /// Сжимает папку/файл
         /// </summary>
-        /// <param name="path"> Путь к файлу, который необходимо сжать </param>
-        /// <param name="BinFileWriter"> Поток записи для архива </param>
+        /// <param name="path"> Путь к файлу/папке, который[ую] необходимо сжать </param>
+        /// <param name="BinFileWriter"> Поток записи в архив </param>
         private void Compress(string path, System.IO.BinaryWriter BinFileWriter)
         {
 
             try
             {
-                System.IO.FileStream StreamOfLogFile = new System.IO.FileStream(Archive_creator.Log, System.IO.FileMode.Append, System.IO.FileAccess.Write);
+                System.IO.FileStream StreamOfLogFile = new System.IO.FileStream(Archive_creator.LogFileName, System.IO.FileMode.Append, System.IO.FileAccess.Write);
                 var BuffStream = new System.IO.BinaryWriter(StreamOfLogFile);
                 BuffStream.Write(path.ToCharArray());
                 BuffStream.Write(Environment.NewLine);
@@ -125,8 +122,6 @@ namespace ar
 
             if (System.IO.File.Exists(path))
             {
-                //byte[] buff;
-
                 System.IO.FileStream StreamOfBaseFile;
 
                 try
@@ -137,7 +132,7 @@ namespace ar
                 {
                     try
                     {
-                        System.IO.FileStream StreamOfLogFile = new System.IO.FileStream(Archive_creator.Log, System.IO.FileMode.Append, System.IO.FileAccess.Write);
+                        System.IO.FileStream StreamOfLogFile = new System.IO.FileStream(Archive_creator.LogFileName, System.IO.FileMode.Append, System.IO.FileAccess.Write);
                         var BuffStream = new System.IO.BinaryWriter(StreamOfLogFile);
                         BuffStream.Write(" |!!!Except of access to file: " + path + "!!!|");
                         BuffStream.Write(Environment.NewLine);
@@ -160,42 +155,8 @@ namespace ar
                         throw new Exception("Программа остановлена по запросу пользователя");
                     }
                 }
-
-
-                /// <summary>
-                /// TODO: Писать родительскую папку, конкретную папку. (Для разархивации, чтобы настроить переходы...) + не пишутся папки.
-                /// </summary>
-                System.IO.FileInfo FileAttrib = new System.IO.FileInfo(path);
-                BinFileWriter.Write(this.MethodIndex);
-                BinFileWriter.Write('|' + ((int)FileAttrib.Attributes).ToString() + '|');
-                BinFileWriter.Write(FileAttrib.CreationTime.ToString() + '|');
-                BinFileWriter.Write(FileAttrib.LastAccessTime.ToString() + '|');
-                BinFileWriter.Write(FileAttrib.LastWriteTime.ToString() + '|');
-                BinFileWriter.Write(FileAttrib.Name + '|');
-                BinFileWriter.Write(FileAttrib.Length.ToString() + '|');
-                //BinFileWriter.Write(FileAttrib.FullName + '|');
-                //BinFileWriter.Write(FileAttrib.Extension + '|');
-                //BinFileWriter.Write(FileAttrib.CreationTimeUtc.ToString() + '|');
-                //BinFileWriter.Write(FileAttrib.Directory.ToString() + '|');
-                //BinFileWriter.Write(FileAttrib.DirectoryName + '|');
-                //BinFileWriter.Write(FileAttrib.Exists.ToString() + '|');
-                //BinFileWriter.Write(FileAttrib.IsReadOnly.ToString() + '|');
-                //BinFileWriter.Write(FileAttrib.LastAccessTimeUtc.ToString() + '|');
-                //BinFileWriter.Write(FileAttrib.LastWriteTimeUtc.ToString() + '|');
-
-                //buff = new byte[StreamOfBaseFile.Length];
-
-                //List<Task> Tasks;
-
-                //Tasks = new List<Task>();
-
-                /*Console.WriteLine((byte)new System.IO.FileInfo(path).Attributes);
-                Console.WriteLine("-------------");
-                foreach (var z in System.IO.File.ReadAllLines(path))
-                {
-                    Console.WriteLine(z);
-                }
-                Console.WriteLine("-------------");*/
+                
+                MakeFileInArchive(path, BinFileWriter);
 
                 /// <summary>
                 /// Чтение файла из потока StreamOfBaseFile
@@ -203,7 +164,6 @@ namespace ar
                 /// Количество выделяемых байт под буффер должно определяться автоматически,
                 /// в зависимости от количества доступной оперативной памяти
                 /// </summary>
-
                 byte Byte_Buff;
 
                 for (Byte_Buff = 0; StreamOfBaseFile.Position < StreamOfBaseFile.Length;)
@@ -211,26 +171,58 @@ namespace ar
                     Byte_Buff = (byte)StreamOfBaseFile.ReadByte();
                     BinFileWriter.Write(Byte_Buff);
                 }
-                
-                /*foreach (var z in buff)
-                {
-                    Console.Write(z.ToString() + '|');
-                }*/
             }
             else
             {
+                MakeFileInArchive(path, BinFileWriter);
                 new Archive_creator(path, BinFileWriter, this.ArchPath, this.MethodIndex);
-                //foreach (var x in System.IO.Directory.EnumerateFileSystemEntries(path))
-                //{
-                //    Compress(x, BinFileWriter);
-                //}
             }
         }
         /// <summary>
-        /// Расширение для архива
+        /// Записывает файловую запись в архив
+        /// </summary>
+        /// <param name="path"> Путь к файлу/папке, свединия о котором необходимо занести в архив </param>
+        /// <param name="BinFileWriter"> Поток записи в архив </param>
+        public void MakeFileInArchive(string path, System.IO.BinaryWriter BinFileWriter)
+        {
+            System.IO.FileInfo FileAttrib = new System.IO.FileInfo(path);
+            BinFileWriter.Write('|');
+            BinFileWriter.Write(this.MethodIndex);
+            BinFileWriter.Write('|');
+            BinFileWriter.Write((Int32)FileAttrib.Attributes);
+            BinFileWriter.Write('|');
+            BinFileWriter.Write(FileAttrib.CreationTime.ToBinary());
+            BinFileWriter.Write('|');
+            BinFileWriter.Write(FileAttrib.LastAccessTime.ToBinary());
+            BinFileWriter.Write('|');
+            BinFileWriter.Write(FileAttrib.LastWriteTime.ToBinary());
+            BinFileWriter.Write('|');
+            BinFileWriter.Write(FileAttrib.Name);
+            BinFileWriter.Write('|');
+            BinFileWriter.Write(FileAttrib.DirectoryName);
+            BinFileWriter.Write('|');
+            if (System.IO.File.Exists(path))
+            {
+                BinFileWriter.Write(FileAttrib.Length);
+                BinFileWriter.Write('|');
+            }
+        }
+        /// <summary>
+        /// Разделитель расширения
+        /// </summary>
+        public const char DefaultExtensionDelimiter = '.';
+        /// <summary>
+        /// Расширение архива
         /// </summary>
         public const string Extension = @".dla";
-        public const string Log = @"Log.dla";
+        /// <summary>
+        /// Путь и расширение log - файла
+        /// </summary>
+        public const string LogFileName = @"Log.dla";
+        /// <summary>
+        /// Стандартное название архива
+        /// </summary>
+        public const string DefaultArchiveName = @"Arch0.dla";
         /// <summary>
         /// Путь к архиву
         /// </summary>
@@ -239,6 +231,10 @@ namespace ar
             get;
             set;
         }
+        /// <summary>
+        /// Номер метода для сжатия. Если 0, система
+        /// автоматически определяет наиболее подходящий
+        /// </summary>
         public UInt16 MethodIndex
         {
             get;
