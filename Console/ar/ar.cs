@@ -12,6 +12,8 @@ namespace ar
         {
             if (args != null && args.Count() > 0)
             {
+                int StartTime = Environment.TickCount;
+
                 ///Архивирует файл/папку 1 в файл 2
                 if (System.IO.File.Exists(args[0]) || System.IO.Directory.Exists(args[0]))
                 {
@@ -36,6 +38,10 @@ namespace ar
                     });
                     Methods.Start();
                     Methods.Wait();
+
+                    StartTime = Environment.TickCount - StartTime;
+
+                    Console.WriteLine("С момента начала архивации прошло {0}min {1}sec {2}ms", (int)(StartTime / 60000), (int)(StartTime / 1000), StartTime % 1000);
                 }
                 else
                 {
@@ -50,9 +56,9 @@ namespace ar
         static void arHelpWanted()
         {
             Console.WriteLine("Zipping - ar:");
-            Console.WriteLine("[PathBase] [PathDest] {Method:int}");
-            Console.WriteLine("Zip Folder/File [PathBase] into archive [PathDest]");
-            Console.WriteLine("Упаковывает папку/файл [PathBase] в архив [PathDest]");
+            Console.WriteLine(@"[PathBase] [PathDest = %Desktop%\Arch0.dla] [Method:int = 0]");
+            Console.WriteLine("Zip Folder/File [PathBase] into archive [PathDest] with method [Method]");
+            Console.WriteLine("Упаковывает папку/файл [PathBase] в архив [PathDest] используя метод [Method]");
         }
     }
 }
