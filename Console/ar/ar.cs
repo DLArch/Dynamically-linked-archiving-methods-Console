@@ -56,7 +56,7 @@ namespace ar
         static void arHelpWanted()
         {
             Console.WriteLine("Zipping - ar:");
-            Console.WriteLine(@"[PathBase] [PathDest = %Desktop%\Arch0.dla] [Method:int = 0]");
+            Console.WriteLine(@"[PathBase] [PathDest = Desktop\Arch0.dla] [Method:int = 0]");
             Console.WriteLine("Zip Folder/File [PathBase] into archive [PathDest] with method [Method]");
             Console.WriteLine("Упаковывает папку/файл [PathBase] в архив [PathDest] используя метод [Method]");
         }
