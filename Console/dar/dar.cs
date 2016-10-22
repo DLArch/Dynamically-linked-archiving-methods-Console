@@ -16,6 +16,7 @@ namespace dar
                 if (System.IO.File.Exists(args[0]))
                 {
                     System.IO.Directory.CreateDirectory(args[1]);
+                    Archive_reader buff = new Archive_reader(args[0], args[1]);
                 }
                 else
                 {
