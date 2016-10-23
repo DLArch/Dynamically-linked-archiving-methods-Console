@@ -191,11 +191,11 @@ namespace ar
             BinFileWriter.Write('|');
             BinFileWriter.Write((Int32)FileAttrib.Attributes);
             BinFileWriter.Write('|');
-            BinFileWriter.Write(FileAttrib.CreationTime.ToBinary());
+            BinFileWriter.Write(FileAttrib.CreationTime.Ticks);
             BinFileWriter.Write('|');
-            BinFileWriter.Write(FileAttrib.LastAccessTime.ToBinary());
+            BinFileWriter.Write(FileAttrib.LastAccessTime.Ticks);
             BinFileWriter.Write('|');
-            BinFileWriter.Write(FileAttrib.LastWriteTime.ToBinary());
+            BinFileWriter.Write(FileAttrib.LastWriteTime.Ticks);
             BinFileWriter.Write('|');
             BinFileWriter.Write(FileAttrib.Name);
             BinFileWriter.Write('|');
