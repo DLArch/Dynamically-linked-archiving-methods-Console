@@ -8,16 +8,17 @@ namespace ar
         /// <summary>
         /// Создает новый архив
         /// </summary>
-        /// <param name="Spath"> Путь к файлам для архивации </param>
+        /// <param name="Spath"> Путь к папке с файлами для архивации </param>
         /// <param name="Apath"> Путь к архиву </param>
         /// <param name="Method"> Номер метода для файлов </param>
         public Archive_creator(string Spath, string Apath = @"789987", UInt16 Method = 0)
         {
-            init(Apath, Method);
+            init(Apath, Spath, Method);
             Create_Archive(Spath);
         }
-        public Archive_creator(string Spath, System.IO.BinaryWriter Wr, string Apath = "789987", UInt16 Method = 0)
+        public Archive_creator(string Spath, System.IO.BinaryWriter Wr, string FilesPath, string Apath = "789987", UInt16 Method = 0)
         {
+            this.FilesPath = FilesPath;
             this.ArchPath = Apath;
             this.MethodIndex = Method;
             foreach (var z in System.IO.Directory.EnumerateFileSystemEntries(Spath))
@@ -30,21 +31,22 @@ namespace ar
         /// </summary>
         /// <param name="path"> Путь для инициализации класса </param>
         /// <param name="method"> Номер метода для файлов </param>
-        private void init(string path, UInt16 method)
+        private void init(string ArcPath, string StartPath, UInt16 method)
         {
-            if (path == "789987")
+            if (ArcPath == "789987")
             {
-                path = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + System.IO.Path.DirectorySeparatorChar + Archive_creator.DefaultArchiveName;
+                ArcPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + System.IO.Path.DirectorySeparatorChar + Archive_creator.DefaultArchiveName;
             }
-            if (path.Where(x => x == DefaultExtensionDelimiter).Count() != 0)
+            if (ArcPath.Where(x => x == DefaultExtensionDelimiter).Count() != 0)
             {
-                this.ArchPath = string.Concat(path.Take(path.Length - (string.Concat(path.Reverse().TakeWhile(x => x != DefaultExtensionDelimiter)) + DefaultExtensionDelimiter).Length)) + Archive_creator.Extension;
+                this.ArchPath = string.Concat(ArcPath.Take(ArcPath.Length - (string.Concat(ArcPath.Reverse().TakeWhile(x => x != DefaultExtensionDelimiter)) + DefaultExtensionDelimiter).Length)) + Archive_creator.Extension;
             }
             else
             {
                 this.ArchPath += Archive_creator.Extension;
             }
             this.MethodIndex = method;
+            this.FilesPath = System.IO.Path.GetFullPath(StartPath);
         }
         /// <summary>
         /// Подсчитывает количиство файлов в указанной папке
@@ -175,7 +177,7 @@ namespace ar
             else
             {
                 MakeFileInArchive(path, BinFileWriter);
-                new Archive_creator(path, BinFileWriter, this.ArchPath, this.MethodIndex);
+                new Archive_creator(path, BinFileWriter, this.FilesPath, this.ArchPath, this.MethodIndex);
             }
         }
         /// <summary>
@@ -199,13 +201,17 @@ namespace ar
             BinFileWriter.Write('|');
             BinFileWriter.Write(FileAttrib.Name);
             BinFileWriter.Write('|');
-            BinFileWriter.Write(FileAttrib.DirectoryName);
+            BinFileWriter.Write(string.Concat(FileAttrib.DirectoryName.Where((x, i) => i > this.FilesPath.Length)));
+            string ptest = FileAttrib.DirectoryName;
+            Console.WriteLine('|' + 
+                string.Concat(ptest.Where((x, i) => i > this.FilesPath.Length))
+                + '|');
             BinFileWriter.Write('|');
             if (System.IO.File.Exists(path))
             {
                 BinFileWriter.Write(FileAttrib.Length);
-                BinFileWriter.Write('|');
             }
+            BinFileWriter.Write('|');
         }
         /// <summary>
         /// Разделитель расширения
@@ -227,6 +233,14 @@ namespace ar
         /// Путь к архиву
         /// </summary>
         public string ArchPath
+        {
+            get;
+            set;
+        }
+        /// <summary>
+        /// Путь к файлам архивации
+        /// </summary>
+        public string FilesPath
         {
             get;
             set;

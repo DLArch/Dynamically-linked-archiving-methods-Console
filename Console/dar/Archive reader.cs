@@ -15,87 +15,95 @@ namespace dar
             System.IO.BinaryReader BinFileReader = new System.IO.BinaryReader(StreamOfAr);
 
             Environment.CurrentDirectory = DestinationPath;
-            this.MakeFileFromArchive(DestinationPath, BinFileReader);
+
+            BufferedFileInfo FileInfo = new BufferedFileInfo();
+
+            this.MakeFileFromArchive(DestinationPath, BinFileReader, FileInfo);
 
             BinFileReader.Close();
             StreamOfAr.Close();
         }
-        public void MakeFileFromArchive(string Path, System.IO.BinaryReader BinFileReader)
+        public void MakeFileFromArchive(string Path, System.IO.BinaryReader BinFileReader, BufferedFileInfo FileInfo)
         {
-            /*byte[] hh = new byte[BinFileReader.BaseStream.Length];
-            long len = BinFileReader.BaseStream.Length - 1;
-            BinFileReader.BaseStream.Read(hh, 0, (int)len);
-            foreach (var u in hh)
-            {
-                Console.Write(u.ToString() + '|');
-            }*/
+            Console.WriteLine(@"-------------//-----------||-----------\\--------------");
             char buff;
             
-            
-            //var FileAttributes = (System.IO.FileAttributes)BinFileReader.ReadInt32();               ///Атрибуты
-
-            //Console.WriteLine(FileAttributes);
-
-            BufferedFileInfo FileInfo = new BufferedFileInfo();
+            FileInfo.IsFolder = true;
 
             buff = BinFileReader.ReadChar();
-            this.Method = BinFileReader.ReadInt16();                                                ///Method
+            this.Method = BinFileReader.ReadInt16();                                                                                ///Метод
 
             buff = BinFileReader.ReadChar();
-            FileInfo.FileAttributes = (System.IO.FileAttributes)BinFileReader.ReadInt32();
+            Console.WriteLine(buff);
+            FileInfo.FileAttributes = (System.IO.FileAttributes)BinFileReader.ReadInt32();                                          ///Атрибуты
 
             buff = BinFileReader.ReadChar();
-            FileInfo.FileCreationTime = new DateTime(BinFileReader.ReadInt64());
+            Console.WriteLine(buff);
+            FileInfo.FileCreationTime = new DateTime(BinFileReader.ReadInt64());                                                    ///Дата создания файла
             buff = BinFileReader.ReadChar();
-            FileInfo.FileLastAccessTime = new DateTime(BinFileReader.ReadInt64());
+            Console.WriteLine(buff);
+            FileInfo.FileLastAccessTime = new DateTime(BinFileReader.ReadInt64());                                                  ///Дата последнего доступа
             buff = BinFileReader.ReadChar();
-            FileInfo.FileLastWriteTime = new DateTime(BinFileReader.ReadInt64());
+            Console.WriteLine(buff);
+            FileInfo.FileLastWriteTime = new DateTime(BinFileReader.ReadInt64());                                                   ///Дата последней записи
+            buff = BinFileReader.ReadChar();
+            Console.WriteLine(buff);
 
-            /*if ((FileAttributes & System.IO.FileAttributes.Directory) == System.IO.FileAttributes.Directory)
+            /// <summary>
+            /// Понять почему при прочтении первый символ из строки с именем странен.
+            /// </summary>
+            buff = BinFileReader.ReadChar();
+            FileInfo.FileName = "";
+            for (buff = BinFileReader.ReadChar(); buff != FileNameDelim; buff = BinFileReader.ReadChar())
             {
-                this.DirectoryCreator(Path, BinFileReader, FileAttributes);
+                FileInfo.FileName += buff;
+            }
+            Console.WriteLine("Name: {0}; Last char: {1}", FileInfo.FileName, buff);
+
+            buff = BinFileReader.ReadChar();
+            FileInfo.FileDirectoryName = "";
+            for (buff = BinFileReader.ReadChar(); buff != FileNameDelim; buff = BinFileReader.ReadChar())
+            {
+                FileInfo.FileDirectoryName += buff;
+            }
+            Console.WriteLine("DirectoryName: {0}; Last char: {1}", FileInfo.FileDirectoryName, buff);
+
+            buff = BinFileReader.ReadChar();
+            Console.WriteLine(buff);
+            if (buff != FileNameDelim)
+            {
+                --BinFileReader.BaseStream.Position;
+                FileInfo.FileLength = BinFileReader.ReadInt64();
             }
             else
             {
-                this.FileCreator(Path, BinFileReader, FileAttributes);
-            }*/
-
-            //Console.WriteLine((System.IO.FileAttributes)BinFileReader.ReadInt32());
-
-            /*System.IO.DirectoryInfo FileAttrib = new System.IO.DirectoryInfo(Path);
-
-            FileAttrib.Attributes = FileAttributes;
-
-            FileAttrib.Create();
-
-            buff = BinFileReader.ReadChar();*/
-            //FileAttrib.CreationTime = new DateTime(BinFileReader.ReadInt64());                      ///Время создания
-            //buff = BinFileReader.ReadChar();
-            //FileAttrib.LastAccessTime = new DateTime(BinFileReader.ReadInt64());                    ///Время последнего доступа
-            //buff = BinFileReader.ReadChar();
-            //FileAttrib.LastWriteTime = new DateTime(BinFileReader.ReadInt64());                     ///Время последней записи
-            //buff = BinFileReader.ReadChar();
-
-            /*if ((FileAttributes & System.IO.FileAttributes.Directory) == System.IO.FileAttributes.Directory)
-            {
-                Console.WriteLine("Dir");
-                this.DirectoryCreator(System.IO.Directory.CreateDirectory(Path), Path, BinFileReader);
+                FileInfo.IsFolder = false;
+                FileInfo.FileLength = 0;
             }
-            else
+
+            string FileAbsolutePath = FileInfo.WriteFile(Path);
+
+            if (FileInfo.IsFolder)
             {
-                System.IO.File.Create(Path);
-                this.FileCreator(Path, BinFileReader);
-            }*/
+                buff = BinFileReader.ReadChar();
 
+                System.IO.FileStream FileStream = System.IO.File.Open(FileAbsolutePath, System.IO.FileMode.Open, System.IO.FileAccess.Write);
 
-            //BinFileReader.ReadString Считать имя
-            //buff = BinFileReader.ReadChar();
-            //buff = BinFileReader.ReadChar();
-            //Считать путь
-            //BinFileReader.(FileAttrib.DirectoryName);
-            ///Вылетело при попытке чтения символа табуляции(Но это не точно. Пытался распарсить запись о папке)
-            //buff = BinFileReader.ReadChar();
-            //buff = BinFileReader.ReadChar();
+                byte ByteBuff;
+
+                for (Int64 Counter = 0; Counter < FileInfo.FileLength; ++Counter)
+                {
+                    ByteBuff = BinFileReader.ReadByte();
+                    FileStream.WriteByte(ByteBuff);
+                }
+
+                FileStream.Close();
+            }
+
+            if (BinFileReader.BaseStream.Length > 0)
+            {
+                MakeFileFromArchive(Path, BinFileReader, FileInfo);
+            }
         }
         public void DirectoryCreator(string Path, System.IO.BinaryReader BinFileReader, System.IO.FileAttributes Attribs)
         {
@@ -133,5 +141,6 @@ namespace dar
             get;
             set;
         }
+        public const char FileNameDelim = '|';
     }
 }

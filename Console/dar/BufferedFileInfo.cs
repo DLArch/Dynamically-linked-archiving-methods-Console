@@ -8,9 +8,32 @@ namespace dar
 {
     public class BufferedFileInfo
     {
-        public System.IO.FileInfo ToFileInfo(string Path)
+        public BufferedFileInfo()
+        {
+            this.IsFolder = true;
+        }
+        /// <summary>
+        /// Записывает файл в папку Path, добавляя необходимые подкаталоги
+        /// </summary>
+        /// <param name="Path"> Папка, в которую необходимо записать файл/папку </param>
+        public string WriteFile(string Path)
+        {
+            Path += System.IO.Path.DirectorySeparatorChar + this.FileDirectoryName + System.IO.Path.DirectorySeparatorChar + this.FileName;
+            if (IsFolder)
+            {
+                this.ToFile(Path);
+            }
+            else
+            {
+                this.ToDirectory(Path);
+            }
+            return Path;
+        }
+        private void ToFile(string Path)
         {
             System.IO.FileInfo FI = new System.IO.FileInfo(Path);
+            var CreatedFileStream = FI.Create();
+            CreatedFileStream.Close();
 
             FI.Attributes = this.FileAttributes;
             FI.CreationTime = this.FileCreationTime;
@@ -19,12 +42,11 @@ namespace dar
             //FI.Name = this.FileName;
             //FI.DirectoryName = this.FileDirectoryName;
             //FI.Length = this.FileLength;
-
-            return FI;
         }
-        public System.IO.DirectoryInfo ToDirectoryInfo(string Path)
+        private void ToDirectory(string Path)
         {
             System.IO.DirectoryInfo DI = new System.IO.DirectoryInfo(Path);
+            DI.Create();
 
             DI.Attributes = this.FileAttributes;
             DI.CreationTime = this.FileCreationTime;
@@ -32,40 +54,67 @@ namespace dar
             DI.LastWriteTime = this.FileLastWriteTime;
             //DI.Name = this.FileName;
             //DI.DirectoryName = this.FileDirectoryName;
-
-            return DI;
         }
+        /// <summary>
+        /// Атрибуты файла
+        /// </summary>
         public System.IO.FileAttributes FileAttributes
         {
             get;
-            set;    
+            set;
         }
+        /// <summary>
+        /// Время создания файла
+        /// </summary>
         public DateTime FileCreationTime
         {
             get;
             set;
         }
+        /// <summary>
+        /// Время последнего доступа к фалу
+        /// </summary>
         public DateTime FileLastAccessTime
         {
             get;
             set;
         }
+        /// <summary>
+        /// Время последней записи в файл
+        /// </summary>
         public DateTime FileLastWriteTime
         {
             get;
             set;
         }
+        /// <summary>
+        /// Имя файла
+        /// </summary>
         public string FileName
         {
             get;
             set;
         }
+        /// <summary>
+        /// Относительный путь к файлу
+        /// </summary>
         public string FileDirectoryName
         {
             get;
             set;
         }
+        /// <summary>
+        /// Размер файла
+        /// </summary>
         public Int64 FileLength
+        {
+            get;
+            set;
+        }
+        /// <summary>
+        /// Является ли объект папкой true = файл
+        /// </summary>
+        public bool IsFolder
         {
             get;
             set;
