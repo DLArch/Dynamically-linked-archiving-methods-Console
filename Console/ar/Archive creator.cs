@@ -16,7 +16,7 @@ namespace ar
             init(Apath, Spath, Method);
             Create_Archive(Spath);
         }
-        public Archive_creator(string Spath, System.IO.BinaryWriter Wr, string FilesPath, string Apath = "789987", UInt16 Method = 0)
+        private Archive_creator(string Spath, System.IO.BinaryWriter Wr, string FilesPath, string Apath = "789987", UInt16 Method = 0)
         {
             this.FilesPath = FilesPath;
             this.ArchPath = Apath;
@@ -46,34 +46,14 @@ namespace ar
                 this.ArchPath += Archive_creator.Extension;
             }
             this.MethodIndex = method;
-            this.FilesPath = System.IO.Path.GetFullPath(StartPath);
-        }
-        /// <summary>
-        /// Подсчитывает количиство файлов в указанной папке
-        /// </summary>
-        /// <param name="path"> Путь к папке/файлам для подсчета </param>
-        private int Count_Of_Files(string path)
-        {
-            int Count_Of_Files_ = 0;
-            if (System.IO.Directory.Exists(path))
+            if (System.IO.Directory.Exists(StartPath))
             {
-                foreach (var e in System.IO.Directory.EnumerateFileSystemEntries(path))
-                {
-                    try
-                    {
-                        if (System.IO.Directory.Exists(e))
-                        {
-                            Count_Of_Files_ += Count_Of_Files(e);
-                        }
-                    }
-                    catch
-                    {
-
-                    }
-                    ++Count_Of_Files_;
-                }
+                this.FilesPath = System.IO.Path.GetDirectoryName(StartPath);
             }
-            return Count_Of_Files_;
+            else
+            {
+                this.FilesPath = System.IO.Path.GetFullPath(StartPath);
+            }
         }
         /// <summary>
         /// Создает и заполняет архивный файл
@@ -102,21 +82,6 @@ namespace ar
         /// <param name="BinFileWriter"> Поток записи в архив </param>
         private void Compress(string path, System.IO.BinaryWriter BinFileWriter)
         {
-
-            try
-            {
-                System.IO.FileStream StreamOfLogFile = new System.IO.FileStream(Archive_creator.LogFileName, System.IO.FileMode.Append, System.IO.FileAccess.Write);
-                var BuffStream = new System.IO.BinaryWriter(StreamOfLogFile);
-                BuffStream.Write(path.ToCharArray());
-                BuffStream.Write(Environment.NewLine);
-                BuffStream.Close();
-                StreamOfLogFile.Close();
-            }
-            catch
-            {
-                ;
-            }
-
             if (path == this.ArchPath || path == (AppDomain.CurrentDomain.BaseDirectory + this.ArchPath))
             {
                 return;
@@ -132,19 +97,6 @@ namespace ar
                 }
                 catch
                 {
-                    try
-                    {
-                        System.IO.FileStream StreamOfLogFile = new System.IO.FileStream(Archive_creator.LogFileName, System.IO.FileMode.Append, System.IO.FileAccess.Write);
-                        var BuffStream = new System.IO.BinaryWriter(StreamOfLogFile);
-                        BuffStream.Write(" |!!!Except of access to file: " + path + "!!!|");
-                        BuffStream.Write(Environment.NewLine);
-                        BuffStream.Close();
-                        StreamOfLogFile.Close();
-                    }
-                    catch
-                    {
-                        Console.WriteLine("Невозможно записать событие");
-                    }
                     Console.WriteLine("Невозможно получить доступ к файлу: " + path);
                     Console.WriteLine("Продолжить работы с ошибкой [y/n]");
                     var KeyPressed = Console.ReadKey().KeyChar;
@@ -201,11 +153,9 @@ namespace ar
             BinFileWriter.Write('|');
             BinFileWriter.Write(FileAttrib.Name);
             BinFileWriter.Write('|');
-            BinFileWriter.Write(string.Concat(FileAttrib.DirectoryName.Where((x, i) => i > this.FilesPath.Length)));
-            string ptest = FileAttrib.DirectoryName;
-            Console.WriteLine('|' + 
-                string.Concat(ptest.Where((x, i) => i > this.FilesPath.Length))
-                + '|');
+            string StrBuff = string.Concat(FileAttrib.DirectoryName.Where((x, i) => i > this.FilesPath.Length));
+            Console.WriteLine(StrBuff + System.IO.Path.DirectorySeparatorChar + FileAttrib.Name);
+            BinFileWriter.Write(StrBuff);
             BinFileWriter.Write('|');
             if (System.IO.File.Exists(path))
             {
