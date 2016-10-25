@@ -41,7 +41,7 @@ namespace ar
 
                     StartTime = Environment.TickCount - StartTime;
 
-                    Console.WriteLine("С момента начала архивации прошло {0}min {1}sec {2}ms", (int)(StartTime / 60000), (int)(StartTime / 1000), StartTime % 1000);
+                    Console.WriteLine("С момента начала архивации прошло {0}min {1}sec {2}ms", (int)(StartTime / 60000), (int)((StartTime % 60000) / 1000), StartTime % 1000);
                 }
                 else
                 {

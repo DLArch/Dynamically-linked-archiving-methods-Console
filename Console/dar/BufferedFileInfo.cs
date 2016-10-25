@@ -18,7 +18,15 @@ namespace dar
         /// <param name="Path"> Папка, в которую необходимо записать файл/папку </param>
         public string WriteFile(string Path)
         {
-            Path += System.IO.Path.DirectorySeparatorChar + this.FileDirectoryName + System.IO.Path.DirectorySeparatorChar + this.FileName;
+            if (this.FileDirectoryName == "")
+            {
+                Path += System.IO.Path.DirectorySeparatorChar + this.FileName;
+            }
+            else
+            {
+                Path += System.IO.Path.DirectorySeparatorChar + this.FileDirectoryName + System.IO.Path.DirectorySeparatorChar + this.FileName;
+            }
+            Console.WriteLine(Path);
             if (IsFolder)
             {
                 this.ToFile(Path);
