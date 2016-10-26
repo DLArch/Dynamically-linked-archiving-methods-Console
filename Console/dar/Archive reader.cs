@@ -52,7 +52,7 @@ namespace dar
             }
 
             /// Считаны |meth|attrib|Cdate|Adate|Wdate|-FileName|
-            
+
             ++BinFileReader.BaseStream.Position;
 
             FileInfo.FileDirectoryName = "";
@@ -62,27 +62,29 @@ namespace dar
             }
 
             /// Считаны |meth|attrib|Cdate|Adate|Wdate|-FileName|-DirName|
-            
+
+            //FileInfo.FileDirectoryName = this.FileNameFix(FileInfo.FileDirectoryName);
+
             ByteBuff = BinFileReader.ReadByte();
             if (ByteBuff != FileNameDelim)
             {
                 --BinFileReader.BaseStream.Position;
                 FileInfo.FileLength = BinFileReader.ReadInt64();
                 ++BinFileReader.BaseStream.Position;
+                FileInfo.IsFolder = false;
 
                 /// Считаны |meth|attrib|Cdate|Adate|Wdate|-FileName|-DirName|12345678|
             }
             else
             {
-                FileInfo.IsFolder = false;
                 FileInfo.FileLength = 0;
 
                 /// Считаны |meth|attrib|Cdate|Adate|Wdate|-FileName|-DirName||
             }
-
+            
             string FileAbsolutePath = FileInfo.WriteFile(Path);
 
-            if (FileInfo.IsFolder)
+            if (!FileInfo.IsFolder)
             {
                 using (System.IO.FileStream FileStream = System.IO.File.Open(FileAbsolutePath, System.IO.FileMode.Open, System.IO.FileAccess.Write))
                 {
@@ -95,10 +97,21 @@ namespace dar
                 }
             }
 
+            FileInfo.SetAttribs(Path);
+
             if (BinFileReader.BaseStream.Position < BinFileReader.BaseStream.Length)
             {
                 MakeFileFromArchive(Path, BinFileReader, FileInfo);
             }
+        }
+        public string FileNameFix(string Path)
+        {
+            Console.WriteLine(System.IO.Path.VolumeSeparatorChar);
+            Console.WriteLine(System.IO.Path.DirectorySeparatorChar);
+            Path = string.Concat(Path.Except(string.Concat(System.IO.Path.VolumeSeparatorChar)));
+            Console.WriteLine("Path: {0}", Path);
+
+            return Path;
         }
         /// <summary>
         /// Символьный буфер

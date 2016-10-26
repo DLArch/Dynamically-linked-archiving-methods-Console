@@ -4,8 +4,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ar", "ar\ar.csproj", "{A5BEF043-2CCC-4153-93B3-85C5A435D5D7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9A71F787-1F87-4D76-8305-7BC90C8089DE} = {9A71F787-1F87-4D76-8305-7BC90C8089DE}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dar", "dar\dar.csproj", "{E060B5E7-69EB-4B06-89D3-609B331DD3AD}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9A71F787-1F87-4D76-8305-7BC90C8089DE} = {9A71F787-1F87-4D76-8305-7BC90C8089DE}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dla", "dla\dla.csproj", "{9A71F787-1F87-4D76-8305-7BC90C8089DE}"
 EndProject

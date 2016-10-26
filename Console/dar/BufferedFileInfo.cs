@@ -18,35 +18,35 @@ namespace dar
         /// <param name="Path"> Папка, в которую необходимо записать файл/папку </param>
         public string WriteFile(string Path)
         {
-            if (this.FileDirectoryName == "")
-            {
-                Path += System.IO.Path.DirectorySeparatorChar + this.FileName;
-            }
-            else
-            {
-                Path += System.IO.Path.DirectorySeparatorChar + this.FileDirectoryName + System.IO.Path.DirectorySeparatorChar + this.FileName;
-            }
-            Console.WriteLine(Path);
+            Path = this.PathChanger(Path);
             if (IsFolder)
             {
-                this.ToFile(Path);
+                this.ToDirectory(Path);
             }
             else
             {
-                this.ToDirectory(Path);
+                this.ToFile(Path);
             }
             return Path;
         }
         private void ToFile(string Path)
         {
+            if (System.IO.File.Exists(Path))
+            {
+                Console.WriteLine("Except: Файл по пути {0} уже существует");
+                return;
+            }
+            
             System.IO.FileInfo FI = new System.IO.FileInfo(Path);
-            var CreatedFileStream = FI.Create();
-            CreatedFileStream.Close();
+            
+            FI.Create().Close();
 
-            FI.Attributes = this.FileAttributes;
             FI.CreationTime = this.FileCreationTime;
             FI.LastAccessTime = this.FileLastAccessTime;
             FI.LastWriteTime = this.FileLastWriteTime;
+
+            FI.Attributes = System.IO.FileAttributes.Normal;
+
             //FI.Name = this.FileName;
             //FI.DirectoryName = this.FileDirectoryName;
             //FI.Length = this.FileLength;
@@ -56,12 +56,52 @@ namespace dar
             System.IO.DirectoryInfo DI = new System.IO.DirectoryInfo(Path);
             DI.Create();
 
-            DI.Attributes = this.FileAttributes;
             DI.CreationTime = this.FileCreationTime;
             DI.LastAccessTime = this.FileLastAccessTime;
             DI.LastWriteTime = this.FileLastWriteTime;
+
+            DI.Attributes = System.IO.FileAttributes.Directory;
+
             //DI.Name = this.FileName;
             //DI.DirectoryName = this.FileDirectoryName;
+        }
+        public void SetAttribs(string Path)
+        {
+            Path = this.PathChanger(Path);
+            if (this.IsFolder)
+            {
+                System.IO.DirectoryInfo FI = new System.IO.DirectoryInfo(Path);
+                FI.Create();
+                FI.Attributes = this.FileAttributes;
+            }
+            else
+            {
+                if (!System.IO.File.Exists(Path))
+                {
+                    System.IO.FileInfo FI = new System.IO.FileInfo(Path);
+                    using (System.IO.FileStream FS = FI.Create())
+                    {
+                        if (FS != null)
+                        {
+                            FS.Close();
+                        }
+                    }
+                    FI.Attributes = this.FileAttributes;
+                }
+            }
+        }
+        private string PathChanger(string Path)
+        {
+            if (this.FileDirectoryName == "")
+            {
+                Path += System.IO.Path.DirectorySeparatorChar + this.FileName;
+            }
+            else
+            {
+                Path += System.IO.Path.DirectorySeparatorChar + this.FileDirectoryName + System.IO.Path.DirectorySeparatorChar + this.FileName;
+            }
+            Console.WriteLine(Path);
+            return Path;
         }
         /// <summary>
         /// Атрибуты файла
@@ -120,7 +160,7 @@ namespace dar
             set;
         }
         /// <summary>
-        /// Является ли объект папкой true = файл
+        /// Является ли объект папкой true = папка
         /// </summary>
         public bool IsFolder
         {

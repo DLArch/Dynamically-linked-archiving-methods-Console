@@ -21,9 +21,19 @@ namespace ar
             this.FilesPath = FilesPath;
             this.ArchPath = Apath;
             this.MethodIndex = Method;
-            foreach (var z in System.IO.Directory.EnumerateFileSystemEntries(Spath))
+            /// <summary>
+            /// Для предотвращения вылета при отказе в доступе к папке
+            /// </summary>
+            try
             {
-                Compress(z, Wr);
+                foreach (var z in System.IO.Directory.EnumerateFileSystemEntries(Spath))
+                {
+                    Compress(z, Wr);
+                }
+            }
+            catch
+            {
+                Console.WriteLine("Except: Отказанно в доступе к папке: {0}", Spath);
             }
         }
         /// <summary>
@@ -43,7 +53,7 @@ namespace ar
             }
             else
             {
-                this.ArchPath += Archive_creator.Extension;
+                this.ArchPath = ArcPath + Archive_creator.Extension;
             }
             this.MethodIndex = method;
             if (System.IO.Directory.Exists(StartPath))
@@ -53,6 +63,10 @@ namespace ar
             else
             {
                 this.FilesPath = System.IO.Path.GetFullPath(StartPath);
+            }
+            if (this.FilesPath == null)
+            {
+                this.FilesPath = StartPath;
             }
         }
         /// <summary>
@@ -67,13 +81,15 @@ namespace ar
 
             CreatedFile.Close();
 
-            System.IO.FileStream StreamOfCreatedFile = new System.IO.FileStream(this.ArchPath, System.IO.FileMode.Append, System.IO.FileAccess.Write);
-            System.IO.BinaryWriter BinFileWriter = new System.IO.BinaryWriter(StreamOfCreatedFile);
+            using (System.IO.FileStream StreamOfCreatedFile = new System.IO.FileStream(this.ArchPath, System.IO.FileMode.Append, System.IO.FileAccess.Write))
+            {
+                System.IO.BinaryWriter BinFileWriter = new System.IO.BinaryWriter(StreamOfCreatedFile);
 
-            Compress(Spath, BinFileWriter);
+                Compress(Spath, BinFileWriter);
 
-            BinFileWriter.Close();
-            StreamOfCreatedFile.Close();
+                BinFileWriter.Close();
+                StreamOfCreatedFile.Close();
+            }
         }
         /// <summary>
         /// Сжимает папку/файл
@@ -84,6 +100,7 @@ namespace ar
         {
             if (path == this.ArchPath || path == (AppDomain.CurrentDomain.BaseDirectory + this.ArchPath))
             {
+                Console.WriteLine("---------------------\n|      Except\n---------------------\n|Невозможно считать файл, в котором формируется архив\n|Файл записан не будет\n|Путь к файлу: {0}\n---------------------", path);
                 return;
             }
 
@@ -106,6 +123,8 @@ namespace ar
                     }
                     else
                     {
+                        BinFileWriter.BaseStream.Close();
+                        BinFileWriter.Close();
                         throw new Exception("Программа остановлена по запросу пользователя");
                     }
                 }
@@ -153,8 +172,17 @@ namespace ar
             BinFileWriter.Write('|');
             BinFileWriter.Write(FileAttrib.Name);
             BinFileWriter.Write('|');
-            string StrBuff = string.Concat(FileAttrib.DirectoryName.Where((x, i) => i > this.FilesPath.Length));
-            Console.WriteLine(StrBuff + System.IO.Path.DirectorySeparatorChar + FileAttrib.Name);
+            string StrBuff;
+            if (FileAttrib.DirectoryName != null)
+            {
+                ///Убирает общую часть пути
+                StrBuff = string.Concat(FileAttrib.DirectoryName.Where((x, i) => i > this.FilesPath.Length));
+                Console.WriteLine(StrBuff + System.IO.Path.DirectorySeparatorChar + FileAttrib.Name);
+            }
+            else
+            {
+                StrBuff = this.FilesPath;
+            }
             BinFileWriter.Write(StrBuff);
             BinFileWriter.Write('|');
             if (System.IO.File.Exists(path))
