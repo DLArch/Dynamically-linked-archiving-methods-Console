@@ -11,6 +11,7 @@ namespace dar
         public BufferedFileInfo()
         {
             this.IsFolder = true;
+            this.NotReadFile = false;
         }
         /// <summary>
         /// Записывает файл в папку Path, добавляя необходимые подкаталоги
@@ -33,13 +34,21 @@ namespace dar
         {
             if (System.IO.File.Exists(Path))
             {
-                Console.WriteLine("Except: Файл по пути {0} уже существует");
+                Console.WriteLine("Except: Файл по пути: {0} уже существует", Path);
                 return;
             }
             
             System.IO.FileInfo FI = new System.IO.FileInfo(Path);
-            
-            FI.Create().Close();
+
+            try
+            {
+                FI.Create().Close();
+            }
+            catch
+            {
+                NotReadFile = true;
+                return;
+            }
 
             FI.CreationTime = this.FileCreationTime;
             FI.LastAccessTime = this.FileLastAccessTime;
@@ -53,6 +62,7 @@ namespace dar
         }
         private void ToDirectory(string Path)
         {
+            var a = string.Concat(System.IO.Path.GetInvalidFileNameChars());
             System.IO.DirectoryInfo DI = new System.IO.DirectoryInfo(Path);
             DI.Create();
 
@@ -100,6 +110,7 @@ namespace dar
             {
                 Path += System.IO.Path.DirectorySeparatorChar + this.FileDirectoryName + System.IO.Path.DirectorySeparatorChar + this.FileName;
             }
+            Path = string.Concat(Path.Where(x => x != System.IO.Path.VolumeSeparatorChar));
             Console.WriteLine(Path);
             return Path;
         }
@@ -155,6 +166,11 @@ namespace dar
         /// Размер файла
         /// </summary>
         public Int64 FileLength
+        {
+            get;
+            set;
+        }
+        public bool NotReadFile
         {
             get;
             set;

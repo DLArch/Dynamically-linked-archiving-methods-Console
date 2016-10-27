@@ -86,32 +86,38 @@ namespace dar
 
             if (!FileInfo.IsFolder)
             {
-                using (System.IO.FileStream FileStream = System.IO.File.Open(FileAbsolutePath, System.IO.FileMode.Open, System.IO.FileAccess.Write))
+                if (!FileInfo.NotReadFile)
                 {
-                    for (Int64 Counter = 0; Counter < FileInfo.FileLength; ++Counter)
+                    Console.WriteLine("sp: {0}", BinFileReader.BaseStream.Position);
+                    using (System.IO.FileStream FileStream = System.IO.File.Open(FileAbsolutePath, System.IO.FileMode.Open, System.IO.FileAccess.Write))
                     {
-                        ByteBuff = BinFileReader.ReadByte();
-                        FileStream.WriteByte(ByteBuff);
+                        for (Int64 Counter = 0; Counter < FileInfo.FileLength; ++Counter)
+                        {
+                            ByteBuff = BinFileReader.ReadByte();
+                            FileStream.WriteByte(ByteBuff);
+                        }
+                        FileStream.Close();
+                        Console.WriteLine("ep: {0}", BinFileReader.BaseStream.Position);
+                        Console.WriteLine("ls: {0}", FileInfo.FileLength);
                     }
-                    FileStream.Close();
+                }
+                else
+                {
+                    Console.WriteLine("sp: {0}", BinFileReader.BaseStream.Position);
+                    BinFileReader.BaseStream.Position += FileInfo.FileLength;
+                    Console.WriteLine("ep: {0}", BinFileReader.BaseStream.Position);
                 }
             }
 
-            FileInfo.SetAttribs(Path);
+            if (!FileInfo.NotReadFile)
+            {
+                FileInfo.SetAttribs(Path);
+            }
 
             if (BinFileReader.BaseStream.Position < BinFileReader.BaseStream.Length)
             {
                 MakeFileFromArchive(Path, BinFileReader, FileInfo);
             }
-        }
-        public string FileNameFix(string Path)
-        {
-            Console.WriteLine(System.IO.Path.VolumeSeparatorChar);
-            Console.WriteLine(System.IO.Path.DirectorySeparatorChar);
-            Path = string.Concat(Path.Except(string.Concat(System.IO.Path.VolumeSeparatorChar)));
-            Console.WriteLine("Path: {0}", Path);
-
-            return Path;
         }
         /// <summary>
         /// Символьный буфер
