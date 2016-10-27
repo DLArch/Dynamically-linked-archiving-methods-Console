@@ -21,18 +21,43 @@ namespace dar
             StreamOfAr.Close();
         }
         public void MakeFileFromArchive(string Path, System.IO.BinaryReader BinFileReader, BufferedFileInfo FileInfo)
-        {            
+        {
             FileInfo.IsFolder = true;
+
+            do
+            {
+                FileInfo.Rep = false;
+
+                ++BinFileReader.BaseStream.Position;
+
+                this.Method = BinFileReader.ReadInt16();                                                                                ///Метод
+                ++BinFileReader.BaseStream.Position;
+
+                try
+                {
+                    Console.WriteLine("StartExceptPosuk = {0}", BinFileReader.BaseStream.Position);
+                    FileInfo.FileAttributes = (System.IO.FileAttributes)BinFileReader.ReadInt32();                                          ///Атрибуты
+                    ++BinFileReader.BaseStream.Position;
+
+                    FileInfo.FileCreationTime = new DateTime(BinFileReader.ReadInt64());                                                    ///Дата создания файла
+                }
+                catch
+                {
+                    Console.WriteLine("EndExceptPosuk = {0}", BinFileReader.BaseStream.Position);
+                    if (FileInfo.RepI > 1)
+                    {
+                        throw new Exception("Ошибка чтения файла из архива.");
+                    }
+                    ++FileInfo.RepI;
+
+                    BinFileReader.BaseStream.Position -= 17;                                                                                ///8дата4метод1разделитель1разделитель
+                    BinFileReader.BaseStream.Position -= FileInfo.FileLength;
+
+                    FileInfo.Rep = true;
+                }
+            }
+            while (FileInfo.Rep);
             
-            ++BinFileReader.BaseStream.Position;
-
-            this.Method = BinFileReader.ReadInt16();                                                                                ///Метод
-            ++BinFileReader.BaseStream.Position;
-
-            FileInfo.FileAttributes = (System.IO.FileAttributes)BinFileReader.ReadInt32();                                          ///Атрибуты
-            ++BinFileReader.BaseStream.Position;
-
-            FileInfo.FileCreationTime = new DateTime(BinFileReader.ReadInt64());                                                    ///Дата создания файла
             ++BinFileReader.BaseStream.Position;
 
             FileInfo.FileLastAccessTime = new DateTime(BinFileReader.ReadInt64());                                                  ///Дата последнего доступа
@@ -106,6 +131,7 @@ namespace dar
                     Console.WriteLine("sp: {0}", BinFileReader.BaseStream.Position);
                     BinFileReader.BaseStream.Position += FileInfo.FileLength;
                     Console.WriteLine("ep: {0}", BinFileReader.BaseStream.Position);
+                    Console.WriteLine("ls: {0}", FileInfo.FileLength);
                 }
             }
 

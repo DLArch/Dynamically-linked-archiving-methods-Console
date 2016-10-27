@@ -46,6 +46,7 @@ namespace dar
             }
             catch
             {
+                Console.WriteLine("Except: Файл по пути: {0} невозможно создать", Path);
                 NotReadFile = true;
                 return;
             }
@@ -183,5 +184,7 @@ namespace dar
             get;
             set;
         }
+        public bool Rep;
+        public byte RepI;
     }
 }
