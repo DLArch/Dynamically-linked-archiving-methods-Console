@@ -8,112 +8,40 @@ namespace dar
 {
     public class BufferedFileInfo
     {
-        public BufferedFileInfo()
+        public void MakeFile(string Path)
         {
-            this.IsFolder = true;
-            this.NotReadFile = false;
-        }
-        /// <summary>
-        /// Записывает файл в папку Path, добавляя необходимые подкаталоги
-        /// </summary>
-        /// <param name="Path"> Папка, в которую необходимо записать файл/папку </param>
-        public string WriteFile(string Path)
-        {
-            Path = this.PathChanger(Path);
+            Path = PathModifier(Path);
             if (IsFolder)
             {
-                this.ToDirectory(Path);
+                FolderCreate(Path);
             }
             else
             {
-                this.ToFile(Path);
+                FileCreate(Path);
             }
-            return Path;
+
+            Console.WriteLine(Path);
         }
-        private void ToFile(string Path)
+        public string PathModifier(string Path)
         {
-            if (System.IO.File.Exists(Path))
-            {
-                Console.WriteLine("Except: Файл по пути: {0} уже существует", Path);
-                return;
-            }
-            
-            System.IO.FileInfo FI = new System.IO.FileInfo(Path);
-
-            try
-            {
-                FI.Create().Close();
-            }
-            catch
-            {
-                Console.WriteLine("Except: Файл по пути: {0} невозможно создать", Path);
-                NotReadFile = true;
-                return;
-            }
-
-            FI.CreationTime = this.FileCreationTime;
-            FI.LastAccessTime = this.FileLastAccessTime;
-            FI.LastWriteTime = this.FileLastWriteTime;
-
-            FI.Attributes = System.IO.FileAttributes.Normal;
-
-            //FI.Name = this.FileName;
-            //FI.DirectoryName = this.FileDirectoryName;
-            //FI.Length = this.FileLength;
-        }
-        private void ToDirectory(string Path)
-        {
-            var a = string.Concat(System.IO.Path.GetInvalidFileNameChars());
-            System.IO.DirectoryInfo DI = new System.IO.DirectoryInfo(Path);
-            DI.Create();
-
-            DI.CreationTime = this.FileCreationTime;
-            DI.LastAccessTime = this.FileLastAccessTime;
-            DI.LastWriteTime = this.FileLastWriteTime;
-
-            DI.Attributes = System.IO.FileAttributes.Directory;
-
-            //DI.Name = this.FileName;
-            //DI.DirectoryName = this.FileDirectoryName;
-        }
-        public void SetAttribs(string Path)
-        {
-            Path = this.PathChanger(Path);
-            if (this.IsFolder)
-            {
-                System.IO.DirectoryInfo FI = new System.IO.DirectoryInfo(Path);
-                FI.Create();
-                FI.Attributes = this.FileAttributes;
-            }
-            else
-            {
-                if (!System.IO.File.Exists(Path))
-                {
-                    System.IO.FileInfo FI = new System.IO.FileInfo(Path);
-                    using (System.IO.FileStream FS = FI.Create())
-                    {
-                        if (FS != null)
-                        {
-                            FS.Close();
-                        }
-                    }
-                    FI.Attributes = this.FileAttributes;
-                }
-            }
-        }
-        private string PathChanger(string Path)
-        {
-            if (this.FileDirectoryName == "")
-            {
-                Path += System.IO.Path.DirectorySeparatorChar + this.FileName;
-            }
-            else
+            if (this.FileDirectoryName != "")
             {
                 Path += System.IO.Path.DirectorySeparatorChar + this.FileDirectoryName + System.IO.Path.DirectorySeparatorChar + this.FileName;
             }
-            Path = string.Concat(Path.Where(x => x != System.IO.Path.VolumeSeparatorChar));
-            Console.WriteLine(Path);
+            else
+            {
+                Path += System.IO.Path.DirectorySeparatorChar + this.FileName;
+            }
+
             return Path;
+        }
+        private void FolderCreate(string Path)
+        {
+            System.IO.Directory.CreateDirectory(System.Environment.CurrentDirectory + Path);
+        }
+        private void FileCreate(string Path)
+        {
+            System.IO.File.Create(System.Environment.CurrentDirectory + Path);
         }
         /// <summary>
         /// Атрибуты файла
@@ -180,6 +108,11 @@ namespace dar
         /// Является ли объект папкой true = папка
         /// </summary>
         public bool IsFolder
+        {
+            get;
+            set;
+        }
+        public Int64 PosBuff
         {
             get;
             set;
