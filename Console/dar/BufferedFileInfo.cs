@@ -8,9 +8,14 @@ namespace dar
 {
     public class BufferedFileInfo
     {
+        /// <summary>
+        /// Зоздание файла/папки по пути
+        /// </summary>
+        /// <param name="Path"> Относительный путь </param>
         public void MakeFile(string Path)
         {
             Path = PathModifier(Path);
+            Console.WriteLine(Path);
             if (IsFolder)
             {
                 FolderCreate(Path);
@@ -20,10 +25,17 @@ namespace dar
                 FileCreate(Path);
             }
 
-            Console.WriteLine(Path);
+            ///Console.WriteLine(Path);
         }
+        /// <summary>
+        /// Процедура модификации пути
+        /// </summary>
+        /// <param name="Path"> Относительный путь </param>
+        /// <returns> Модифицированный относительный путь </returns>
         public string PathModifier(string Path)
         {
+            this.FileDirectoryName = string.Concat(this.FileDirectoryName.Where(x => x != System.IO.Path.VolumeSeparatorChar));
+            this.FileName = string.Concat(this.FileName.Where(x => x != System.IO.Path.VolumeSeparatorChar));
             if (this.FileDirectoryName != "")
             {
                 Path += System.IO.Path.DirectorySeparatorChar + this.FileDirectoryName + System.IO.Path.DirectorySeparatorChar + this.FileName;
@@ -33,15 +45,80 @@ namespace dar
                 Path += System.IO.Path.DirectorySeparatorChar + this.FileName;
             }
 
+            Path = string.Concat(Path.Where(x => System.IO.Path.GetInvalidPathChars().Where(y => y == x).Count() <= 0));
+
             return Path;
         }
+        /// <summary>
+        /// Создание папки
+        /// </summary>
+        /// <param name="Path"> Модифицированный относительный путь </param>
         private void FolderCreate(string Path)
         {
-            System.IO.Directory.CreateDirectory(System.Environment.CurrentDirectory + Path);
+            Path = System.Environment.CurrentDirectory + Path;
+
+            if (Path.Length < 248)
+            {
+                System.IO.Directory.CreateDirectory(Path);
+            }
+            else
+            {
+                this.NotReadFile = true;
+                Console.WriteLine("Папка {0} не была прочитана из-за слишком длинного пути.", Path);
+            }
         }
+        /// <summary>
+        /// Создание файла
+        /// </summary>
+        /// <param name="Path"> Модифицированный относительный путь </param>
         private void FileCreate(string Path)
         {
-            System.IO.File.Create(System.Environment.CurrentDirectory + Path);
+            Path = System.Environment.CurrentDirectory + Path;
+
+            try
+            {
+                if (!System.IO.File.Exists(Path) && Path.Length < 260)
+                {
+                    System.IO.File.Create(Path).Close();
+                }
+                else
+                {
+                    this.NotReadFile = true;
+                    Console.WriteLine("Файл {0} не был прочитан из-за слишком длинного пути.", Path);
+                }
+            }
+            catch
+            {
+                Console.WriteLine("Файл {0} не был прочитан из-за слишком длинного пути.", Path);
+            }
+        }
+        /// <summary>
+        /// Запись атрибутов
+        /// </summary>
+        /// <param name="Path"> Абсолютный путь </param>
+        public void WriteAttribs(string Path)
+        {
+            if (this.IsFolder)
+            {
+                if (!System.IO.Directory.Exists(Path))
+                {
+                    System.IO.DirectoryInfo FileInfo = new System.IO.DirectoryInfo(Path);
+                    
+                    FileInfo.CreationTime = this.FileCreationTime;
+                    FileInfo.LastAccessTime = this.FileLastAccessTime;
+                    FileInfo.LastWriteTime = this.FileLastWriteTime;
+                    FileInfo.Attributes = this.FileAttributes;
+                }
+            }
+            else
+            {
+                System.IO.FileInfo FileInfo = new System.IO.FileInfo(Path);
+                
+                FileInfo.CreationTime = this.FileCreationTime;
+                FileInfo.LastAccessTime = this.FileLastAccessTime;
+                FileInfo.LastWriteTime = this.FileLastWriteTime;
+                FileInfo.Attributes = this.FileAttributes;
+            }
         }
         /// <summary>
         /// Атрибуты файла
@@ -99,6 +176,10 @@ namespace dar
             get;
             set;
         }
+        /// <summary>
+        /// Указывает, читать ли файл или нет
+        /// True = нечитать
+        /// </summary>
         public bool NotReadFile
         {
             get;
@@ -112,12 +193,13 @@ namespace dar
             get;
             set;
         }
+        /// <summary>
+        /// Позиция указателя в файле
+        /// </summary>
         public Int64 PosBuff
         {
             get;
             set;
         }
-        public bool Rep;
-        public byte RepI;
     }
 }

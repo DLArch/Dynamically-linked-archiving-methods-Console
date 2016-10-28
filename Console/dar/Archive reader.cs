@@ -8,6 +8,12 @@ namespace dar
 {
     public class Archive_reader
     {
+        /// <summary>
+        /// Распаковывает архив из ArchivePath в папку DestinationPath,
+        /// создавая ее если она отсутствует.
+        /// </summary>
+        /// <param name="ArchivePath"> Абсолютный/относительный путь к архиву </param>
+        /// <param name="DestinationPath"> Абсолютный/относительный путь к папке </param>
         public Archive_reader(string ArchivePath, string DestinationPath)
         {
             System.IO.FileStream StreamOfAr = new System.IO.FileStream(ArchivePath, System.IO.FileMode.Open, System.IO.FileAccess.Read);
@@ -25,6 +31,7 @@ namespace dar
         public void MakeFileFromArchive(string Path, System.IO.BinaryReader BinFileReader, BufferedFileInfo FileInfo)
         {
             FileInfo.IsFolder = false;
+            FileInfo.NotReadFile = false;
 
             ++BinFileReader.BaseStream.Position;                                                                        ///|
             this.Method = BinFileReader.ReadInt16();                                                                    ///|Method
@@ -52,30 +59,48 @@ namespace dar
                 FileInfo.FileDirectoryName += this.buff;
             }                                                                                                           ///|Method|Атрибуты|Д|Д|Д|-Name|-Path|
 
-            this.buff = BinFileReader.ReadChar();
-            if (this.buff == Archive_reader.FileNameDelim)
+            if ((FileInfo.FileAttributes & System.IO.FileAttributes.Directory) == System.IO.FileAttributes.Directory)
             {
-                FileInfo.IsFolder = true;                                                                               ///|Method|Атрибуты|Д|Д|Д|-Name|-Path|-|
+                FileInfo.IsFolder = true;                                                                               ///|Method|Атрибуты|Д|Д|Д|-Name|-Path|
             }
             else
             {
-                --BinFileReader.BaseStream.Position;
                 FileInfo.FileLength = BinFileReader.ReadInt64();                                                        ///|Method|Атрибуты|Д|Д|Д|-Name|-Path|12345
-                ++BinFileReader.BaseStream.Position;                                                                    ///|Method|Атрибуты|Д|Д|Д|-Name|-Path|12345|
             }
-            
+            ++BinFileReader.BaseStream.Position;                                                                        ///|Method|Атрибуты|Д|Д|Д|-Name|-Path|12345|
+
+            /// Создание файла/папки
             FileInfo.MakeFile(Path);
 
+            /// Запись в файл
             if (!FileInfo.IsFolder)
             {
                 try
                 {
-                    using (System.IO.FileStream bFS = new System.IO.FileStream(System.Environment.CurrentDirectory + FileInfo.PathModifier(Path), System.IO.FileMode.Open, System.IO.FileAccess.Write))
+                    /// Изменение указателя в потоке при невозможности записи в файл
+                    if (FileInfo.NotReadFile)
                     {
-                        for (FileInfo.PosBuff = 0; FileInfo.PosBuff < FileInfo.FileLength; ++FileInfo.PosBuff)
+                        BinFileReader.BaseStream.Position += FileInfo.FileLength;
+                    }
+                    else
+                    {
+                        /// Проверка на повреждение последнего файла в архиве
+                        if ((BinFileReader.BaseStream.Position + FileInfo.FileLength) <= BinFileReader.BaseStream.Length)
                         {
-                            this.ByteBuff = BinFileReader.ReadByte();
-                            bFS.WriteByte(this.ByteBuff);
+                            using (System.IO.FileStream bFS = new System.IO.FileStream(System.Environment.CurrentDirectory + FileInfo.PathModifier(Path), System.IO.FileMode.Open, System.IO.FileAccess.Write))
+                            {
+                                for (FileInfo.PosBuff = 0; FileInfo.PosBuff < FileInfo.FileLength; ++FileInfo.PosBuff)
+                                {
+                                    this.ByteBuff = BinFileReader.ReadByte();
+                                    bFS.WriteByte(this.ByteBuff);
+                                }
+                                bFS.Close();
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Файл {0} поврежден при записи и не был разархивирован!", System.Environment.CurrentDirectory + FileInfo.PathModifier(Path));
+                            return;
                         }
                     }
                 }
@@ -85,6 +110,13 @@ namespace dar
                     BinFileReader.BaseStream.Position += FileInfo.FileLength;
                 }
             }
+
+            /// Запись атрибутов
+            if (!FileInfo.NotReadFile)
+            {
+                FileInfo.WriteAttribs(System.Environment.CurrentDirectory + FileInfo.PathModifier(Path));
+            }
+
             if (BinFileReader.BaseStream.Position < BinFileReader.BaseStream.Length)
             {
                 MakeFileFromArchive(Path, BinFileReader, FileInfo);
