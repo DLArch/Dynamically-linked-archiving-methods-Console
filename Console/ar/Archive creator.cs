@@ -139,10 +139,17 @@ namespace ar
                 /// </summary>
                 byte Byte_Buff;
 
-                for (Byte_Buff = 0; StreamOfBaseFile.Position < StreamOfBaseFile.Length;)
+                if (StreamOfBaseFile.Length == new System.IO.FileInfo(path).Length)
                 {
-                    Byte_Buff = (byte)StreamOfBaseFile.ReadByte();
-                    BinFileWriter.Write(Byte_Buff);
+                    for (Byte_Buff = 0; StreamOfBaseFile.Position < StreamOfBaseFile.Length;)
+                    {
+                        Byte_Buff = (byte)StreamOfBaseFile.ReadByte();
+                        BinFileWriter.Write(Byte_Buff);
+                    }
+                }
+                else
+                {
+                    throw new Exception("CYKA IZ-ZA ETOGO");
                 }
             }
             else
