@@ -12,106 +12,83 @@ namespace dar
         {
             System.IO.FileStream StreamOfAr = new System.IO.FileStream(ArchivePath, System.IO.FileMode.Open, System.IO.FileAccess.Read);
             System.IO.BinaryReader BinFileReader = new System.IO.BinaryReader(StreamOfAr);
+            
+            System.Environment.CurrentDirectory += System.IO.Path.DirectorySeparatorChar + DestinationPath;
 
             BufferedFileInfo FileInfo = new BufferedFileInfo();
 
-            this.MakeFileFromArchive(DestinationPath, BinFileReader, FileInfo);
+            this.MakeFileFromArchive("", BinFileReader, FileInfo);
 
             BinFileReader.Close();
             StreamOfAr.Close();
         }
         public void MakeFileFromArchive(string Path, System.IO.BinaryReader BinFileReader, BufferedFileInfo FileInfo)
-        {            
-            FileInfo.IsFolder = true;
-            
-            ++BinFileReader.BaseStream.Position;
+        {
+            FileInfo.IsFolder = false;
 
-            this.Method = BinFileReader.ReadInt16();                                                                                ///Метод
-            ++BinFileReader.BaseStream.Position;
+            ++BinFileReader.BaseStream.Position;                                                                        ///|
+            this.Method = BinFileReader.ReadInt16();                                                                    ///|Method
+            ++BinFileReader.BaseStream.Position;                                                                        ///|Method|
+            FileInfo.FileAttributes = (System.IO.FileAttributes)BinFileReader.ReadInt32();                              ///|Method|Атрибуты
+            ++BinFileReader.BaseStream.Position;                                                                        ///|Method|Атрибуты|
+            FileInfo.FileCreationTime = new DateTime(BinFileReader.ReadInt64());                                        ///|Method|Атрибуты|Д
+            ++BinFileReader.BaseStream.Position;                                                                        ///|Method|Атрибуты|Д|
+            FileInfo.FileLastAccessTime = new DateTime(BinFileReader.ReadInt64());                                      ///|Method|Атрибуты|Д|Д
+            ++BinFileReader.BaseStream.Position;                                                                        ///|Method|Атрибуты|Д|Д|
+            FileInfo.FileLastWriteTime = new DateTime(BinFileReader.ReadInt64());                                       ///|Method|Атрибуты|Д|Д|Д
+            ++BinFileReader.BaseStream.Position;                                                                        ///|Method|Атрибуты|Д|Д|Д|
 
-            FileInfo.FileAttributes = (System.IO.FileAttributes)BinFileReader.ReadInt32();                                          ///Атрибуты
             ++BinFileReader.BaseStream.Position;
-
-            FileInfo.FileCreationTime = new DateTime(BinFileReader.ReadInt64());                                                    ///Дата создания файла
-            ++BinFileReader.BaseStream.Position;
-
-            FileInfo.FileLastAccessTime = new DateTime(BinFileReader.ReadInt64());                                                  ///Дата последнего доступа
-            ++BinFileReader.BaseStream.Position;
-
-            FileInfo.FileLastWriteTime = new DateTime(BinFileReader.ReadInt64());                                                   ///Дата последней записи
-            ++BinFileReader.BaseStream.Position;
-
-            /// Считаны |meth|attrib|Cdate|Adate|Wdate|
-            
-            ++BinFileReader.BaseStream.Position;
-
             FileInfo.FileName = "";
-            for (buff = BinFileReader.ReadChar(); buff != FileNameDelim; buff = BinFileReader.ReadChar())
+            for (this.buff = BinFileReader.ReadChar(); this.buff != Archive_reader.FileNameDelim; this.buff = BinFileReader.ReadChar())
             {
-                FileInfo.FileName += buff;
-            }
-
-            /// Считаны |meth|attrib|Cdate|Adate|Wdate|-FileName|
+                FileInfo.FileName += this.buff;
+            }                                                                                                           ///|Method|Атрибуты|Д|Д|Д|-Name|
 
             ++BinFileReader.BaseStream.Position;
-
             FileInfo.FileDirectoryName = "";
-            for (buff = BinFileReader.ReadChar(); buff != FileNameDelim; buff = BinFileReader.ReadChar())
+            for (this.buff = BinFileReader.ReadChar(); this.buff != Archive_reader.FileNameDelim; this.buff = BinFileReader.ReadChar())
             {
-                FileInfo.FileDirectoryName += buff;
-            }
+                FileInfo.FileDirectoryName += this.buff;
+            }                                                                                                           ///|Method|Атрибуты|Д|Д|Д|-Name|-Path|
 
-            /// Считаны |meth|attrib|Cdate|Adate|Wdate|-FileName|-DirName|
-
-            //FileInfo.FileDirectoryName = this.FileNameFix(FileInfo.FileDirectoryName);
-
-            ByteBuff = BinFileReader.ReadByte();
-            if (ByteBuff != FileNameDelim)
+            this.buff = BinFileReader.ReadChar();
+            if (this.buff == Archive_reader.FileNameDelim)
             {
-                --BinFileReader.BaseStream.Position;
-                FileInfo.FileLength = BinFileReader.ReadInt64();
-                ++BinFileReader.BaseStream.Position;
-                FileInfo.IsFolder = false;
-
-                /// Считаны |meth|attrib|Cdate|Adate|Wdate|-FileName|-DirName|12345678|
+                FileInfo.IsFolder = true;                                                                               ///|Method|Атрибуты|Д|Д|Д|-Name|-Path|-|
             }
             else
             {
-                FileInfo.FileLength = 0;
-
-                /// Считаны |meth|attrib|Cdate|Adate|Wdate|-FileName|-DirName||
+                --BinFileReader.BaseStream.Position;
+                FileInfo.FileLength = BinFileReader.ReadInt64();                                                        ///|Method|Атрибуты|Д|Д|Д|-Name|-Path|12345
+                ++BinFileReader.BaseStream.Position;                                                                    ///|Method|Атрибуты|Д|Д|Д|-Name|-Path|12345|
             }
             
-            string FileAbsolutePath = FileInfo.WriteFile(Path);
+            FileInfo.MakeFile(Path);
 
             if (!FileInfo.IsFolder)
             {
-                using (System.IO.FileStream FileStream = System.IO.File.Open(FileAbsolutePath, System.IO.FileMode.Open, System.IO.FileAccess.Write))
+                try
                 {
-                    for (Int64 Counter = 0; Counter < FileInfo.FileLength; ++Counter)
+                    using (System.IO.FileStream bFS = new System.IO.FileStream(System.Environment.CurrentDirectory + FileInfo.PathModifier(Path), System.IO.FileMode.Open, System.IO.FileAccess.Write))
                     {
-                        ByteBuff = BinFileReader.ReadByte();
-                        FileStream.WriteByte(ByteBuff);
+                        for (FileInfo.PosBuff = 0; FileInfo.PosBuff < FileInfo.FileLength; ++FileInfo.PosBuff)
+                        {
+                            this.ByteBuff = BinFileReader.ReadByte();
+                            bFS.WriteByte(this.ByteBuff);
+                        }
                     }
-                    FileStream.Close();
+                }
+                catch
+                {
+                    Console.WriteLine("Программа не может получить доступ к {0}", System.Environment.CurrentDirectory + FileInfo.PathModifier(Path));
+                    BinFileReader.BaseStream.Position += FileInfo.FileLength;
                 }
             }
-
-            FileInfo.SetAttribs(Path);
-
             if (BinFileReader.BaseStream.Position < BinFileReader.BaseStream.Length)
             {
                 MakeFileFromArchive(Path, BinFileReader, FileInfo);
             }
-        }
-        public string FileNameFix(string Path)
-        {
-            Console.WriteLine(System.IO.Path.VolumeSeparatorChar);
-            Console.WriteLine(System.IO.Path.DirectorySeparatorChar);
-            Path = string.Concat(Path.Except(string.Concat(System.IO.Path.VolumeSeparatorChar)));
-            Console.WriteLine("Path: {0}", Path);
-
-            return Path;
         }
         /// <summary>
         /// Символьный буфер

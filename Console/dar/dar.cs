@@ -28,6 +28,7 @@ namespace dar
             {
                 darHelpWanted();
             }
+            Console.ReadKey();
         }
         static void darHelpWanted()
         {
