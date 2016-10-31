@@ -10,6 +10,8 @@ namespace dar
     {
         static void Main(string[] args)
         {
+            int StartTime = Environment.TickCount;
+
             if (args.Count() == 2)
             {
                 ///Разархивирует файл 0 в папку 1
@@ -23,6 +25,12 @@ namespace dar
                     });
                     Methods.Start();
                     Methods.Wait();
+
+                    StartTime = Environment.TickCount - StartTime;
+
+                    Console.WriteLine("С момента начала архивации прошло {0}min {1}sec {2}ms", (int)(StartTime / 60000), (int)((StartTime % 60000) / 1000), StartTime % 1000);
+
+                    Console.ReadKey();
                 }
                 else
                 {
@@ -33,7 +41,6 @@ namespace dar
             {
                 darHelpWanted();
             }
-            Console.ReadKey();
         }
         static void darHelpWanted()
         {

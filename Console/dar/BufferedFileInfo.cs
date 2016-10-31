@@ -14,6 +14,7 @@ namespace dar
         /// <param name="Path"> Относительный путь </param>
         public void MakeFile(string Path)
         {
+            Console.WriteLine(Path);
             Path = PathModifier(Path);
             Console.WriteLine(Path);
             if (IsFolder)
@@ -64,7 +65,8 @@ namespace dar
             else
             {
                 this.NotReadFile = true;
-                Console.WriteLine("Папка {0} не была прочитана из-за слишком длинного пути.", Path);
+                this.LogFileHandle.Write("Папка " + Path + " не была записанна из-за слишком длинного пути.");
+                Console.WriteLine("Папка {0} не была записанна из-за слишком длинного пути.", Path);
             }
         }
         /// <summary>
@@ -83,13 +85,25 @@ namespace dar
                 }
                 else
                 {
-                    this.NotReadFile = true;
-                    Console.WriteLine("Файл {0} не был прочитан из-за слишком длинного пути.", Path);
+                    if (System.IO.File.Exists(Path) && Path.Length < 260)
+                    {
+                        ///Console.WriteLine("Файл {0} уже существует. Файл будет перезаписан.", Path);
+                        this.LogFileHandle.Write("Файл " + Path + " уже существует. Файл будет перезаписан.");
+                        System.IO.File.Delete(Path);
+                        System.IO.File.Create(Path).Close();
+                    }
+                    else
+                    {
+                        this.NotReadFile = true;
+                        this.LogFileHandle.Write("Файл " + Path + " не был записан из-за слишком длинного пути.");
+                        Console.WriteLine("Файл {0} не был записан из-за слишком длинного пути.", Path);
+                    }
                 }
             }
             catch
             {
-                Console.WriteLine("Файл {0} не был прочитан из-за слишком длинного пути.", Path);
+                this.LogFileHandle.Write("Файл " + Path + " не был записан из-за слишком длинного пути.");
+                Console.WriteLine("Файл {0} не был записан из-за слишком длинного пути.", Path);
             }
         }
         /// <summary>
@@ -119,6 +133,11 @@ namespace dar
                 FileInfo.LastWriteTime = this.FileLastWriteTime;
                 FileInfo.Attributes = this.FileAttributes;
             }
+        }
+        public System.IO.BinaryWriter LogFileHandle
+        {
+            get;
+            set;
         }
         /// <summary>
         /// Атрибуты файла
