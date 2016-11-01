@@ -70,7 +70,7 @@ namespace ar
             {
                 this.FilesPath = StartPath;
             }
-            this.TemporaryFolder = System.IO.Path.GetTempPath() + System.IO.Path.DirectorySeparatorChar + @"dla";
+            this.TemporaryFolder = System.IO.Path.GetTempPath() + System.IO.Path.DirectorySeparatorChar + TemporaryFolderBaseName;
             if (!System.IO.Directory.Exists(this.TemporaryFolder))
             {
                 System.IO.Directory.CreateDirectory(this.TemporaryFolder);
@@ -102,6 +102,10 @@ namespace ar
             {
                 System.IO.File.Delete(this.TemporaryFile);
             }
+            if (System.IO.Directory.Exists(this.TemporaryFolder))
+            {
+                System.IO.Directory.Delete(this.TemporaryFolder);
+            }
         }
         /// <summary>
         /// Сжимает папку/файл
@@ -111,7 +115,8 @@ namespace ar
         private void Compress(string path, System.IO.BinaryWriter BinFileWriter)
         {
             ///
-            /// Не может удалить temp-файл
+            /// Не может удалить temp-файл -
+            /// Уже может
             ///
             try
             {
@@ -122,7 +127,9 @@ namespace ar
             }
             catch
             {
-
+                System.Console.WriteLine("Не удален....");
+                Console.Beep(4000, 1000);
+                Console.ReadKey();
             }
             ///
             /// Если архив
@@ -141,16 +148,28 @@ namespace ar
                 {
                     this.TemporaryFile = this.TemporaryFolder + System.IO.Path.DirectorySeparatorChar + System.IO.Path.GetFileName(path);
                     ///
-                    /// Проверить место на диске
-                    /// Заменить на переписывание в файл со стандартными аттрибутами
+                    /// Проверить место на диске --- TODO
+                    /// Запись файла во временный. Невозможно использовать system.io.file.copy(), т.к. он может не удалиться
                     ///
-                    System.IO.File.Copy(path, this.TemporaryFile, true);
+                    StreamOfBaseFile = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read);
+                    System.IO.FileStream TempFileBaseStream = System.IO.File.Create(this.TemporaryFile);
+                    System.IO.BinaryWriter TempFileWriteStream = new System.IO.BinaryWriter(TempFileBaseStream);
+                    
+                    for (Byte_Buff = 0; StreamOfBaseFile.Position < StreamOfBaseFile.Length;)
+                    {
+                        Byte_Buff = (byte)StreamOfBaseFile.ReadByte();
+                        TempFileWriteStream.Write(Byte_Buff);
+                    }
+
+                    TempFileWriteStream.Close();
+                    TempFileBaseStream.Close();
+
                     StreamOfBaseFile = new System.IO.FileStream(this.TemporaryFile, System.IO.FileMode.Open, System.IO.FileAccess.Read);
                 }
                 catch
                 {
                     Console.WriteLine("Невозможно получить доступ к файлу: " + this.TemporaryFile/*path*/);
-                    Console.WriteLine("Продолжить работы с ошибкой [y/n]");
+                    Console.WriteLine("Продолжить работу с ошибкой [y/n]");
                     var KeyPressed = Console.ReadKey().KeyChar;
                     if (KeyPressed == 'y' || KeyPressed == 'Y')
                     {
@@ -172,7 +191,6 @@ namespace ar
                 /// Количество выделяемых байт под буффер должно определяться автоматически,
                 /// в зависимости от количества доступной оперативной памяти
                 /// </summary>
-                byte Byte_Buff;
 
                 if (StreamOfBaseFile.Length == new System.IO.FileInfo(path).Length)
                 {
@@ -184,7 +202,7 @@ namespace ar
                 }
                 else
                 {
-                    Console.WriteLine("CYKA IZ-ZA ETOGO");
+                    Console.WriteLine("Размер временного файла != размеру исходного файла");
                 }
 
                 StreamOfBaseFile.Close();
@@ -234,7 +252,7 @@ namespace ar
             BinFileWriter.Write('|');
             BinFileWriter.Write(FileAttrib.Name);
             BinFileWriter.Write('|');
-            string StrBuff;
+
             if (FileAttrib.DirectoryName != null)
             {
                 ///Убирает общую часть пути
@@ -252,6 +270,22 @@ namespace ar
                 BinFileWriter.Write(FileAttrib.Length);
             }
             BinFileWriter.Write('|');
+        }
+        /// <summary>
+        /// Строковый буфер
+        /// </summary>
+        public string StrBuff
+        {
+            get;
+            set;
+        }
+        /// <summary>
+        /// Байтовый буфер
+        /// </summary>
+        public byte Byte_Buff
+        {
+            get;
+            set;
         }
         /// <summary>
         /// Путь к временной папке
@@ -277,6 +311,10 @@ namespace ar
         /// Расширение архива
         /// </summary>
         public const string Extension = @".dla";
+        /// <summary>
+        /// Стандартное имя временной папки
+        /// </summary>
+        public const string TemporaryFolderBaseName = @"Dla";
         /// <summary>
         /// Путь и расширение log - файла
         /// </summary>
