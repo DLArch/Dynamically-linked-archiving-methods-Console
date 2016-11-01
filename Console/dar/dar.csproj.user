@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <StartArguments>
-    </StartArguments>
+    <StartArguments>C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\ar\bin\Debug\arch.dla C:\Users\Oleg\Desktop\tfolder</StartArguments>
   </PropertyGroup>
 </Project>

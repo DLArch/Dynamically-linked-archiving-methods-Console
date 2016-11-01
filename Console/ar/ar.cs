@@ -10,10 +10,10 @@ namespace ar
     {
         static void Main(string[] args)
         {
+            int StartTime = Environment.TickCount;
+
             if (args != null && args.Count() > 0)
             {
-                int StartTime = Environment.TickCount;
-
                 ///Архивирует файл/папку 1 в файл 2
                 if (System.IO.File.Exists(args[0]) || System.IO.Directory.Exists(args[0]))
                 {

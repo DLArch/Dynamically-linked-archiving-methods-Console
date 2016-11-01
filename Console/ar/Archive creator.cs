@@ -3,6 +3,7 @@ using System.Linq;
 
 namespace ar
 {
+    public delegate void Compress(string path);
     public class Archive_creator
     {
         /// <summary>
@@ -16,11 +17,12 @@ namespace ar
             init(Apath, Spath, Method);
             Create_Archive(Spath);
         }
-        private Archive_creator(string Spath, System.IO.BinaryWriter Wr, string FilesPath, string Apath = "789987", UInt16 Method = 0)
+        private Archive_creator(string Spath, System.IO.BinaryWriter Wr, string FilesPath, string TemporaryFolder, string Apath = "789987", UInt16 Method = 0)
         {
             this.FilesPath = FilesPath;
             this.ArchPath = Apath;
             this.MethodIndex = Method;
+            this.TemporaryFolder = TemporaryFolder;
             /// <summary>
             /// Для предотвращения вылета при отказе в доступе к папке
             /// </summary>
@@ -31,7 +33,7 @@ namespace ar
                     Compress(z, Wr);
                 }
             }
-            catch
+            catch(System.Security.SecurityException)
             {
                 Console.WriteLine("Except: Отказанно в доступе к папке: {0}", Spath);
             }
@@ -68,6 +70,11 @@ namespace ar
             {
                 this.FilesPath = StartPath;
             }
+            this.TemporaryFolder = System.IO.Path.GetTempPath() + System.IO.Path.DirectorySeparatorChar + @"dla";
+            if (!System.IO.Directory.Exists(this.TemporaryFolder))
+            {
+                System.IO.Directory.CreateDirectory(this.TemporaryFolder);
+            }
         }
         /// <summary>
         /// Создает и заполняет архивный файл
@@ -90,6 +97,11 @@ namespace ar
                 BinFileWriter.Close();
                 StreamOfCreatedFile.Close();
             }
+
+            if (System.IO.File.Exists(this.TemporaryFile))
+            {
+                System.IO.File.Delete(this.TemporaryFile);
+            }
         }
         /// <summary>
         /// Сжимает папку/файл
@@ -98,6 +110,23 @@ namespace ar
         /// <param name="BinFileWriter"> Поток записи в архив </param>
         private void Compress(string path, System.IO.BinaryWriter BinFileWriter)
         {
+            ///
+            /// Не может удалить temp-файл
+            ///
+            try
+            {
+                if (System.IO.File.Exists(this.TemporaryFile))
+                {
+                    System.IO.File.Delete(this.TemporaryFile);
+                }
+            }
+            catch
+            {
+
+            }
+            ///
+            /// Если архив
+            ///
             if (path == this.ArchPath || path == (AppDomain.CurrentDomain.BaseDirectory + this.ArchPath))
             {
                 Console.WriteLine("---------------------\n|      Except\n---------------------\n|Невозможно считать файл, в котором формируется архив\n|Файл записан не будет\n|Путь к файлу: {0}\n---------------------", path);
@@ -110,11 +139,17 @@ namespace ar
 
                 try
                 {
-                    StreamOfBaseFile = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read);
+                    this.TemporaryFile = this.TemporaryFolder + System.IO.Path.DirectorySeparatorChar + System.IO.Path.GetFileName(path);
+                    ///
+                    /// Проверить место на диске
+                    /// Заменить на переписывание в файл со стандартными аттрибутами
+                    ///
+                    System.IO.File.Copy(path, this.TemporaryFile, true);
+                    StreamOfBaseFile = new System.IO.FileStream(this.TemporaryFile, System.IO.FileMode.Open, System.IO.FileAccess.Read);
                 }
                 catch
                 {
-                    Console.WriteLine("Невозможно получить доступ к файлу: " + path);
+                    Console.WriteLine("Невозможно получить доступ к файлу: " + this.TemporaryFile/*path*/);
                     Console.WriteLine("Продолжить работы с ошибкой [y/n]");
                     var KeyPressed = Console.ReadKey().KeyChar;
                     if (KeyPressed == 'y' || KeyPressed == 'Y')
@@ -149,13 +184,33 @@ namespace ar
                 }
                 else
                 {
-                    throw new Exception("CYKA IZ-ZA ETOGO");
+                    Console.WriteLine("CYKA IZ-ZA ETOGO");
                 }
+
+                StreamOfBaseFile.Close();
+
             }
             else
             {
                 MakeFileInArchive(path, BinFileWriter);
-                new Archive_creator(path, BinFileWriter, this.FilesPath, this.ArchPath, this.MethodIndex);
+                ///
+                /// По идее кушает памяти больше чем ниже преведенный фрагмент
+                ///
+                //new Archive_creator(path, BinFileWriter, this.FilesPath, this.TemporaryFolder, this.ArchPath, this.MethodIndex);
+                /// <summary>
+                /// Для предотвращения вылета при отказе в доступе к папке
+                /// </summary>
+                try
+                {
+                    foreach (var npath in System.IO.Directory.EnumerateFileSystemEntries(path))
+                    {
+                        Compress(npath, BinFileWriter);
+                    }
+                }
+                catch (System.Security.SecurityException)
+                {
+                    Console.WriteLine("Except: Отказанно в доступе к папке: {0}", path);
+                }
             }
         }
         /// <summary>
@@ -197,6 +252,22 @@ namespace ar
                 BinFileWriter.Write(FileAttrib.Length);
             }
             BinFileWriter.Write('|');
+        }
+        /// <summary>
+        /// Путь к временной папке
+        /// </summary>
+        public string TemporaryFolder
+        {
+            get;
+            set;
+        }
+        /// <summary>
+        /// Имя временного файла во временной папке
+        /// </summary>
+        public string TemporaryFile
+        {
+            get;
+            set;
         }
         /// <summary>
         /// Разделитель расширения

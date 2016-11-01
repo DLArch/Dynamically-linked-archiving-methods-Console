@@ -16,17 +16,37 @@ namespace dar
         /// <param name="DestinationPath"> Абсолютный/относительный путь к папке </param>
         public Archive_reader(string ArchivePath, string DestinationPath)
         {
+            if (!System.IO.Directory.Exists(System.Environment.CurrentDirectory + System.IO.Path.GetDirectoryName(Archive_reader.LogFilePath)))
+            {
+                System.IO.Directory.CreateDirectory(System.Environment.CurrentDirectory + System.IO.Path.GetDirectoryName(Archive_reader.LogFilePath));
+            }
+
+            System.IO.FileStream StreamOfLog = new System.IO.FileStream((Environment.CurrentDirectory + Archive_reader.LogFilePath), System.IO.FileMode.Append, System.IO.FileAccess.Write);
+            System.IO.BinaryWriter BinLogWriter = new System.IO.BinaryWriter(StreamOfLog);
+
             System.IO.FileStream StreamOfAr = new System.IO.FileStream(ArchivePath, System.IO.FileMode.Open, System.IO.FileAccess.Read);
             System.IO.BinaryReader BinFileReader = new System.IO.BinaryReader(StreamOfAr);
-            
-            System.Environment.CurrentDirectory += System.IO.Path.DirectorySeparatorChar + DestinationPath;
+
+            if (System.IO.Path.IsPathRooted(DestinationPath))
+            {
+                System.Environment.CurrentDirectory = DestinationPath;
+            }
+            else
+            {
+                System.Environment.CurrentDirectory += System.IO.Path.DirectorySeparatorChar + DestinationPath;
+            }
 
             BufferedFileInfo FileInfo = new BufferedFileInfo();
+
+            FileInfo.LogFileHandle = BinLogWriter;
 
             this.MakeFileFromArchive("", BinFileReader, FileInfo);
 
             BinFileReader.Close();
             StreamOfAr.Close();
+
+            BinLogWriter.Close();
+            StreamOfLog.Close();
         }
         public void MakeFileFromArchive(string Path, System.IO.BinaryReader BinFileReader, BufferedFileInfo FileInfo)
         {
@@ -99,6 +119,7 @@ namespace dar
                         }
                         else
                         {
+                            FileInfo.LogFileHandle.Write("Файл " + System.Environment.CurrentDirectory + FileInfo.PathModifier(Path) + " поврежден при записи и не был разархивирован!");
                             Console.WriteLine("Файл {0} поврежден при записи и не был разархивирован!", System.Environment.CurrentDirectory + FileInfo.PathModifier(Path));
                             return;
                         }
@@ -106,6 +127,7 @@ namespace dar
                 }
                 catch
                 {
+                    FileInfo.LogFileHandle.Write("Программа не может получить доступ к " + System.Environment.CurrentDirectory + FileInfo.PathModifier(Path));
                     Console.WriteLine("Программа не может получить доступ к {0}", System.Environment.CurrentDirectory + FileInfo.PathModifier(Path));
                     BinFileReader.BaseStream.Position += FileInfo.FileLength;
                 }
@@ -151,5 +173,6 @@ namespace dar
         /// Разделитель в файловой записи архива
         /// </summary>
         public const char FileNameDelim = '|';
+        public const string LogFilePath = @"\Logs\Log.dlal";
     }
 }
