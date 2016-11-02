@@ -41,8 +41,6 @@ namespace dar
 
             FileInfo.LogFileHandle = BinLogWriter;
 
-            this.TemporaryFile = System.IO.Path.GetTempFileName();
-
             this.MakeFileFromArchive("", BinFileReader, FileInfo);
 
             BinFileReader.Close();
@@ -113,6 +111,9 @@ namespace dar
                             ///
                             /// Пишем в bFS с архива
                             ///
+
+                            this.TemporaryFile = System.IO.Path.GetTempFileName();
+
                             //using (System.IO.FileStream bFS = new System.IO.FileStream(System.Environment.CurrentDirectory + FileInfo.PathModifier(Path), System.IO.FileMode.Open, System.IO.FileAccess.Write))
                             using (System.IO.FileStream bFS = new System.IO.FileStream(this.TemporaryFile, System.IO.FileMode.Open, System.IO.FileAccess.Write))
                             {
@@ -130,18 +131,14 @@ namespace dar
 
                             using (System.IO.FileStream bFS = new System.IO.FileStream(System.Environment.CurrentDirectory + FileInfo.PathModifier(Path), System.IO.FileMode.Open, System.IO.FileAccess.Write))
                             {
-                                using (System.IO.FileStream BbFS = new System.IO.FileStream(this.TemporaryFile, System.IO.FileMode.Open, System.IO.FileAccess.Read))
-                                {
-                                    using (System.IO.BinaryReader brFS = new System.IO.BinaryReader(BbFS))
+                                using (System.IO.BinaryReader brFS = new System.IO.BinaryReader(new System.IO.FileStream(this.TemporaryFile, System.IO.FileMode.Open, System.IO.FileAccess.Read)))
+                                { 
+                                    for (FileInfo.PosBuff = 0; FileInfo.PosBuff < FileInfo.FileLength; ++FileInfo.PosBuff)
                                     {
-                                        for (FileInfo.PosBuff = 0; FileInfo.PosBuff < FileInfo.FileLength; ++FileInfo.PosBuff)
-                                        {
-                                            this.ByteBuff = brFS.ReadByte();
-                                            bFS.WriteByte(this.ByteBuff);
-                                        }
-                                        brFS.Close();
+                                        this.ByteBuff = brFS.ReadByte();
+                                        bFS.WriteByte(this.ByteBuff);
                                     }
-                                    BbFS.Close();
+                                    brFS.Close();
                                 }
                                 bFS.Close();
                             }
@@ -162,6 +159,7 @@ namespace dar
                 {
                     FileInfo.LogFileHandle.Write("Программа не может получить доступ к " + System.Environment.CurrentDirectory + FileInfo.PathModifier(Path));
                     Console.WriteLine("Программа не может получить доступ к {0}", System.Environment.CurrentDirectory + FileInfo.PathModifier(Path));
+                    FileInfo.NotReadFile = true;
                     BinFileReader.BaseStream.Position += FileInfo.FileLength;
                 }
             }
