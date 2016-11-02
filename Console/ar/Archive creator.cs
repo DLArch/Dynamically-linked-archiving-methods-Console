@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace ar
 {
-    public delegate void Compress(string path);
+    public delegate string CompressMethod(string path);
     public class Archive_creator
     {
         /// <summary>
@@ -115,23 +115,6 @@ namespace ar
         private void Compress(string path, System.IO.BinaryWriter BinFileWriter)
         {
             ///
-            /// Не может удалить temp-файл -
-            /// Уже может
-            ///
-            try
-            {
-                if (System.IO.File.Exists(this.TemporaryFile))
-                {
-                    System.IO.File.Delete(this.TemporaryFile);
-                }
-            }
-            catch
-            {
-                System.Console.WriteLine("Не удален....");
-                Console.Beep(4000, 1000);
-                Console.ReadKey();
-            }
-            ///
             /// Если архив
             ///
             if (path == this.ArchPath || path == (AppDomain.CurrentDomain.BaseDirectory + this.ArchPath))
@@ -146,7 +129,8 @@ namespace ar
 
                 try
                 {
-                    this.TemporaryFile = this.TemporaryFolder + System.IO.Path.DirectorySeparatorChar + System.IO.Path.GetFileName(path);
+                    //this.TemporaryFile = this.TemporaryFolder + System.IO.Path.DirectorySeparatorChar + System.IO.Path.GetFileName(path);
+                    this.TemporaryFile = System.IO.Path.GetTempFileName();
                     ///
                     /// Проверить место на диске --- TODO
                     /// Запись файла во временный. Невозможно использовать system.io.file.copy(), т.к. он может не удалиться
@@ -155,14 +139,18 @@ namespace ar
                     System.IO.FileStream TempFileBaseStream = System.IO.File.Create(this.TemporaryFile);
                     System.IO.BinaryWriter TempFileWriteStream = new System.IO.BinaryWriter(TempFileBaseStream);
                     
-                    for (Byte_Buff = 0; StreamOfBaseFile.Position < StreamOfBaseFile.Length;)
+                    for (this.Byte_Buff = 0; StreamOfBaseFile.Position < StreamOfBaseFile.Length;)
                     {
-                        Byte_Buff = (byte)StreamOfBaseFile.ReadByte();
-                        TempFileWriteStream.Write(Byte_Buff);
+                        this.Byte_Buff = (byte)StreamOfBaseFile.ReadByte();
+                        TempFileWriteStream.Write(this.Byte_Buff);
                     }
 
                     TempFileWriteStream.Close();
                     TempFileBaseStream.Close();
+
+                    ///
+                    /// Вызов делегата для this.TemporaryFile. 
+                    ///
 
                     StreamOfBaseFile = new System.IO.FileStream(this.TemporaryFile, System.IO.FileMode.Open, System.IO.FileAccess.Read);
                 }
@@ -194,10 +182,10 @@ namespace ar
 
                 if (StreamOfBaseFile.Length == new System.IO.FileInfo(path).Length)
                 {
-                    for (Byte_Buff = 0; StreamOfBaseFile.Position < StreamOfBaseFile.Length;)
+                    for (this.Byte_Buff = 0; StreamOfBaseFile.Position < StreamOfBaseFile.Length;)
                     {
-                        Byte_Buff = (byte)StreamOfBaseFile.ReadByte();
-                        BinFileWriter.Write(Byte_Buff);
+                        this.Byte_Buff = (byte)StreamOfBaseFile.ReadByte();
+                        BinFileWriter.Write(this.Byte_Buff);
                     }
                 }
                 else
@@ -207,6 +195,13 @@ namespace ar
 
                 StreamOfBaseFile.Close();
 
+                ///
+                /// Удаление временного файла
+                ///
+                if (System.IO.File.Exists(this.TemporaryFile))
+                {
+                    System.IO.File.Delete(this.TemporaryFile);
+                }
             }
             else
             {

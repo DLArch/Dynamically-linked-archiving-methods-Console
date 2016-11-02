@@ -8,6 +8,7 @@ namespace dar
 {
     public class Archive_reader
     {
+        public delegate string DeCompressMethod(string path);
         /// <summary>
         /// Распаковывает архив из ArchivePath в папку DestinationPath,
         /// создавая ее если она отсутствует.
@@ -107,7 +108,14 @@ namespace dar
                         /// Проверка на повреждение последнего файла в архиве
                         if ((BinFileReader.BaseStream.Position + FileInfo.FileLength) <= BinFileReader.BaseStream.Length)
                         {
-                            using (System.IO.FileStream bFS = new System.IO.FileStream(System.Environment.CurrentDirectory + FileInfo.PathModifier(Path), System.IO.FileMode.Open, System.IO.FileAccess.Write))
+                            ///
+                            /// Пишем в bFS с архива
+                            ///
+
+                            this.TemporaryFile = System.IO.Path.GetTempFileName();
+
+                            //using (System.IO.FileStream bFS = new System.IO.FileStream(System.Environment.CurrentDirectory + FileInfo.PathModifier(Path), System.IO.FileMode.Open, System.IO.FileAccess.Write))
+                            using (System.IO.FileStream bFS = new System.IO.FileStream(this.TemporaryFile, System.IO.FileMode.Open, System.IO.FileAccess.Write))
                             {
                                 for (FileInfo.PosBuff = 0; FileInfo.PosBuff < FileInfo.FileLength; ++FileInfo.PosBuff)
                                 {
@@ -115,6 +123,28 @@ namespace dar
                                     bFS.WriteByte(this.ByteBuff);
                                 }
                                 bFS.Close();
+                            }
+
+                            ///
+                            /// Метод
+                            ///
+
+                            using (System.IO.FileStream bFS = new System.IO.FileStream(System.Environment.CurrentDirectory + FileInfo.PathModifier(Path), System.IO.FileMode.Open, System.IO.FileAccess.Write))
+                            {
+                                using (System.IO.BinaryReader brFS = new System.IO.BinaryReader(new System.IO.FileStream(this.TemporaryFile, System.IO.FileMode.Open, System.IO.FileAccess.Read)))
+                                { 
+                                    for (FileInfo.PosBuff = 0; FileInfo.PosBuff < FileInfo.FileLength; ++FileInfo.PosBuff)
+                                    {
+                                        this.ByteBuff = brFS.ReadByte();
+                                        bFS.WriteByte(this.ByteBuff);
+                                    }
+                                    brFS.Close();
+                                }
+                                bFS.Close();
+                            }
+                            if (System.IO.File.Exists(this.TemporaryFile))
+                            {
+                                System.IO.File.Delete(this.TemporaryFile);
                             }
                         }
                         else
@@ -129,6 +159,7 @@ namespace dar
                 {
                     FileInfo.LogFileHandle.Write("Программа не может получить доступ к " + System.Environment.CurrentDirectory + FileInfo.PathModifier(Path));
                     Console.WriteLine("Программа не может получить доступ к {0}", System.Environment.CurrentDirectory + FileInfo.PathModifier(Path));
+                    FileInfo.NotReadFile = true;
                     BinFileReader.BaseStream.Position += FileInfo.FileLength;
                 }
             }
@@ -143,6 +174,22 @@ namespace dar
             {
                 MakeFileFromArchive(Path, BinFileReader, FileInfo);
             }
+        }
+        /// <summary>
+        /// Путь к временной папке
+        /// </summary>
+        public string TemporaryFolder
+        {
+            get;
+            set;
+        }
+        /// <summary>
+        /// Имя временного файла во временной папке
+        /// </summary>
+        public string TemporaryFile
+        {
+            get;
+            set;
         }
         /// <summary>
         /// Символьный буфер
