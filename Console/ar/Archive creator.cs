@@ -148,15 +148,32 @@ namespace ar
                     TempFileWriteStream.Close();
                     TempFileBaseStream.Close();
 
+                    try
+                    {
+                        if (System.IO.Directory.Exists(System.Environment.CurrentDirectory + System.IO.Path.DirectorySeparatorChar + AssemblysFolderName))
+                        {
+                            System.Reflection.Assembly.LoadFile(System.Environment.CurrentDirectory + System.IO.Path.DirectorySeparatorChar + AssemblysFolderName + System.IO.Path.DirectorySeparatorChar + @"M" + this.MethodIndex + @".dll");
+                        }
+                        else
+                        {
+                            Console.WriteLine("Файлы повреждены. Переустановите программу!");
+                            throw new Exception();
+                        }
+                    }
+                    catch
+                    {
+                        Console.WriteLine("Сборка {0} повреждена", System.Environment.CurrentDirectory + System.IO.Path.DirectorySeparatorChar + AssemblysFolderName + System.IO.Path.DirectorySeparatorChar + @"M" + this.MethodIndex + @".dll");
+                        throw new Exception();
+                    }
                     ///
                     /// Вызов делегата для this.TemporaryFile. 
                     ///
 
                     StreamOfBaseFile = new System.IO.FileStream(this.TemporaryFile, System.IO.FileMode.Open, System.IO.FileAccess.Read);
                 }
-                catch
+                catch(System.IO.IOException)
                 {
-                    Console.WriteLine("Невозможно получить доступ к файлу: " + this.TemporaryFile/*path*/);
+                    Console.WriteLine("Невозможно получить доступ к файлу: " + path);
                     Console.WriteLine("Продолжить работу с ошибкой [y/n]");
                     var KeyPressed = Console.ReadKey().KeyChar;
                     if (KeyPressed == 'y' || KeyPressed == 'Y')
@@ -318,6 +335,7 @@ namespace ar
         /// Стандартное название архива
         /// </summary>
         public const string DefaultArchiveName = @"Arch0.dla";
+        public const string AssemblysFolderName = "Assemblys";
         /// <summary>
         /// Путь к архиву
         /// </summary>
