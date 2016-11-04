@@ -84,6 +84,9 @@ namespace ar
         {
             System.IO.FileStream CreatedFile = System.IO.File.Create(this.ArchPath);
 
+            ///
+            /// TODO: Переделать  задание аттрибутов архиву
+            ///
             System.IO.File.SetAttributes(this.ArchPath, System.IO.File.GetAttributes(this.ArchPath) | System.IO.FileAttributes.Archive | System.IO.FileAttributes.ReparsePoint | System.IO.FileAttributes.Compressed);
 
             CreatedFile.Close();
@@ -125,53 +128,93 @@ namespace ar
 
             if (System.IO.File.Exists(path))
             {
-                System.IO.FileStream StreamOfBaseFile;
-
                 try
                 {
                     //this.TemporaryFile = this.TemporaryFolder + System.IO.Path.DirectorySeparatorChar + System.IO.Path.GetFileName(path);
                     this.TemporaryFile = System.IO.Path.GetTempFileName();
                     ///
                     /// Проверить место на диске --- TODO
-                    /// Запись файла во временный. Невозможно использовать system.io.file.copy(), т.к. он может не удалиться
+                    /// Запись основного файла во временный(требования выбранной стратегии безопасности).
                     ///
-                    StreamOfBaseFile = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read);
+                    this.StreamOfBaseFile = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read);
                     System.IO.FileStream TempFileBaseStream = System.IO.File.Create(this.TemporaryFile);
                     System.IO.BinaryWriter TempFileWriteStream = new System.IO.BinaryWriter(TempFileBaseStream);
                     
-                    for (this.Byte_Buff = 0; StreamOfBaseFile.Position < StreamOfBaseFile.Length;)
+                    for (this.Byte_Buff = 0; this.StreamOfBaseFile.Position < this.StreamOfBaseFile.Length;)
                     {
-                        this.Byte_Buff = (byte)StreamOfBaseFile.ReadByte();
+                        this.Byte_Buff = (byte)this.StreamOfBaseFile.ReadByte();
                         TempFileWriteStream.Write(this.Byte_Buff);
                     }
 
                     TempFileWriteStream.Close();
                     TempFileBaseStream.Close();
 
+                    NeededAssembly = System.Environment.CurrentDirectory + System.IO.Path.DirectorySeparatorChar + AssemblysFolderName + System.IO.Path.DirectorySeparatorChar + @"M" + this.MethodIndex + @".dll";
+
+                    /*if (System.AppDomain.CurrentDomain.GetAssemblies().ToList().Exists(x => x.Location == this.NeededAssembly))
+                    {*/
                     try
                     {
-                        if (System.IO.Directory.Exists(System.Environment.CurrentDirectory + System.IO.Path.DirectorySeparatorChar + AssemblysFolderName))
+                        if (System.IO.File.Exists(this.NeededAssembly))
                         {
-                            System.Reflection.Assembly.LoadFile(System.Environment.CurrentDirectory + System.IO.Path.DirectorySeparatorChar + AssemblysFolderName + System.IO.Path.DirectorySeparatorChar + @"M" + this.MethodIndex + @".dll");
+                            /*self.Current_Dll_Loaded:= System.Reflection.Assembly.LoadFile(self._dllWay);
+                            self.ob_func:= System.Activator.CreateInstance(self.Current_Dll_Loaded.GetType('func_My.nc'));
+                            fn_my:= (mass_my_for_func)(self.Current_Dll_Loaded.GetType('func_My.nc').GetMethod('func_').Invoke(self.ob_func, new object[1](1)));*/
+
+                            this.MethodAssembly = System.Reflection.Assembly.LoadFile(this.NeededAssembly);
+                            //this.MethodClass = System.Activator.CreateInstance(MethodAssembly.GetType("Method"), new Type[2] {Type.GetType("string"), Type.GetType("bool")});
                         }
                         else
                         {
-                            Console.WriteLine("Файлы повреждены. Переустановите программу!");
+                            Console.WriteLine("Файл отсутствуeт: {1} Переустановите программу!", this.NeededAssembly);
                             throw new Exception();
                         }
                     }
                     catch
                     {
-                        Console.WriteLine("Сборка {0} повреждена", System.Environment.CurrentDirectory + System.IO.Path.DirectorySeparatorChar + AssemblysFolderName + System.IO.Path.DirectorySeparatorChar + @"M" + this.MethodIndex + @".dll");
+                        Console.WriteLine("Сборка {0} повреждена. Загрузите ее заново!", this.NeededAssembly);
                         throw new Exception();
                     }
+
+                    this.StrBuff = this.TemporaryFile;
+
+                    /// TDOD: Проанализировать возможность выполнения через System.AppDomain.CurrentDomain.ExecuteAssembly
+                    /// Без загрузки в текуший домен
                     ///
                     /// Вызов делегата для this.TemporaryFile. 
                     ///
+                    ///---------------------------------------------------
+                    ///
+                    /// Вытаскивание конструкторов из класса и вызов 0ого.
+                    /// TODO: Конкретизировать выбор конструктора
+                    ///
+                    this.AssemblyConstructorType = this.MethodAssembly.GetType("Method.Method");
+                    this.ClassConstructors = this.AssemblyConstructorType.GetConstructors();
+                    //System.Reflection.ConstructorInfo ci = ti.GetConstructor(new Type[1] { tis/*this.TemporaryFile.GetType()*//*, true.GetType()*/});
 
-                    StreamOfBaseFile = new System.IO.FileStream(this.TemporaryFile, System.IO.FileMode.Open, System.IO.FileAccess.Read);
+                    /// Чет плохо вызывается
+                    /// Как минимум ref параметр не возвращается
+
+                    if (this.ClassConstructors != null && ClassConstructors.Count() > 0)
+                    {
+                        this.ClassConstructors[0].Invoke(new object[2] { this.TemporaryFile, true });
+                    }
+                    else
+                    {
+                        Console.WriteLine("Файлы поврежены. Неудалось загрузить из сбоки {0} тип {1}", this.AssemblyConstructorType.Module.FullyQualifiedName, this.AssemblyConstructorType.FullName);
+                        throw new Exception();
+                    }
+                    ///---------------------------------------------------
+                    /// Проверка изменения пути к файлу и удаление отосланного, если он был переписан в новый
+                    if (this.StrBuff != this.TemporaryFile && System.IO.File.Exists(this.StrBuff))
+                    {
+                        System.IO.File.Delete(this.StrBuff);
+                    }
+                    //}
+
+                    this.StreamOfBaseFile = new System.IO.FileStream(this.TemporaryFile, System.IO.FileMode.Open, System.IO.FileAccess.Read);
                 }
-                catch(System.IO.IOException)
+                catch (System.IO.IOException)
                 {
                     Console.WriteLine("Невозможно получить доступ к файлу: " + path);
                     Console.WriteLine("Продолжить работу с ошибкой [y/n]");
@@ -197,11 +240,11 @@ namespace ar
                 /// в зависимости от количества доступной оперативной памяти
                 /// </summary>
 
-                if (StreamOfBaseFile.Length == new System.IO.FileInfo(path).Length)
+                if (this.StreamOfBaseFile.Length == new System.IO.FileInfo(path).Length)
                 {
-                    for (this.Byte_Buff = 0; StreamOfBaseFile.Position < StreamOfBaseFile.Length;)
+                    for (this.Byte_Buff = 0; this.StreamOfBaseFile.Position < this.StreamOfBaseFile.Length;)
                     {
-                        this.Byte_Buff = (byte)StreamOfBaseFile.ReadByte();
+                        this.Byte_Buff = (byte)this.StreamOfBaseFile.ReadByte();
                         BinFileWriter.Write(this.Byte_Buff);
                     }
                 }
@@ -210,7 +253,7 @@ namespace ar
                     Console.WriteLine("Размер временного файла != размеру исходного файла");
                 }
 
-                StreamOfBaseFile.Close();
+                this.StreamOfBaseFile.Close();
 
                 ///
                 /// Удаление временного файла
@@ -282,6 +325,14 @@ namespace ar
                 BinFileWriter.Write(FileAttrib.Length);
             }
             BinFileWriter.Write('|');
+        }
+        /// <summary>
+        /// Файловый поток
+        /// </summary>
+        public System.IO.FileStream StreamOfBaseFile
+        {
+            get;
+            set;
         }
         /// <summary>
         /// Строковый буфер
@@ -357,6 +408,46 @@ namespace ar
         /// автоматически определяет наиболее подходящий
         /// </summary>
         public UInt16 MethodIndex
+        {
+            get;
+            set;
+        }
+        /// <summary>
+        /// Загружаемая сборка
+        /// </summary>
+        public System.Reflection.Assembly MethodAssembly
+        {
+            get;
+            set;
+        }
+        /// <summary>
+        /// Метод из загружаемой сборки
+        /// </summary>
+        public object MethodClass
+        {
+            get;
+            set;
+        }
+        /// <summary>
+        /// Путь к сборке
+        /// </summary>
+        public string NeededAssembly
+        {
+            get;
+            set;
+        }
+        /// <summary>
+        /// Тип из сборки(класс)
+        /// </summary>
+        public System.Type AssemblyConstructorType
+        {
+            get;
+            set;
+        }
+        /// <summary>
+        /// Массив конструкторов класса
+        /// </summary>
+        public System.Reflection.ConstructorInfo[] ClassConstructors
         {
             get;
             set;
