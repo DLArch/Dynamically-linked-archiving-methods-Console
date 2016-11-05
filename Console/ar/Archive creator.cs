@@ -3,7 +3,6 @@ using System.Linq;
 
 namespace ar
 {
-    public delegate string CompressMethod(string path);
     public class Archive_creator
     {
         /// <summary>
@@ -84,6 +83,9 @@ namespace ar
         {
             System.IO.FileStream CreatedFile = System.IO.File.Create(this.ArchPath);
 
+            ///
+            /// TODO: Переделать  задание аттрибутов архиву
+            ///
             System.IO.File.SetAttributes(this.ArchPath, System.IO.File.GetAttributes(this.ArchPath) | System.IO.FileAttributes.Archive | System.IO.FileAttributes.ReparsePoint | System.IO.FileAttributes.Compressed);
 
             CreatedFile.Close();
@@ -123,40 +125,82 @@ namespace ar
                 return;
             }
 
+            this.NotTempFile = false;
+
             if (System.IO.File.Exists(path))
             {
-                System.IO.FileStream StreamOfBaseFile;
-
                 try
                 {
-                    //this.TemporaryFile = this.TemporaryFolder + System.IO.Path.DirectorySeparatorChar + System.IO.Path.GetFileName(path);
                     this.TemporaryFile = System.IO.Path.GetTempFileName();
-                    ///
-                    /// Проверить место на диске --- TODO
-                    /// Запись файла во временный. Невозможно использовать system.io.file.copy(), т.к. он может не удалиться
-                    ///
-                    StreamOfBaseFile = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read);
-                    System.IO.FileStream TempFileBaseStream = System.IO.File.Create(this.TemporaryFile);
-                    System.IO.BinaryWriter TempFileWriteStream = new System.IO.BinaryWriter(TempFileBaseStream);
+
+                    this.StreamOfBaseFile = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read);
+                    this.TemporaryFileStream = System.IO.File.Create(this.TemporaryFile);
+
+                    this.NeededAssembly = System.Environment.CurrentDirectory + System.IO.Path.DirectorySeparatorChar + AssemblysFolderName + System.IO.Path.DirectorySeparatorChar + @"M" + this.MethodIndex + @".dll";
                     
-                    for (this.Byte_Buff = 0; StreamOfBaseFile.Position < StreamOfBaseFile.Length;)
+                    try
                     {
-                        this.Byte_Buff = (byte)StreamOfBaseFile.ReadByte();
-                        TempFileWriteStream.Write(this.Byte_Buff);
+                        if (System.IO.File.Exists(this.NeededAssembly))
+                        {
+                            this.MethodAssembly = System.Reflection.Assembly.LoadFile(this.NeededAssembly);
+                        }
+                        else
+                        {
+                            Console.WriteLine("Файл отсутствуeт: {1} Переустановите программу!", this.NeededAssembly);
+                            throw new Exception();
+                        }
+                    }
+                    catch
+                    {
+                        Console.WriteLine("Сборка {0} повреждена. Загрузите ее заново!", this.NeededAssembly);
+                        throw new Exception();
                     }
 
-                    TempFileWriteStream.Close();
-                    TempFileBaseStream.Close();
-
+                    /// TDOD: Проанализировать возможность выполнения через System.AppDomain.CurrentDomain.ExecuteAssembly
+                    /// Без загрузки в текуший домен
                     ///
-                    /// Вызов делегата для this.TemporaryFile. 
+                    ///---------------------------------------------------
                     ///
+                    /// Вытаскивание конструкторов из класса и вызов 0ого.
+                    /// TODO: Конкретизировать выбор конструктора
+                    ///
+                    this.AssemblyConstructorType = this.MethodAssembly.GetType("Method.Method");
+                    this.ClassConstructors = this.AssemblyConstructorType.GetConstructors();
+                    //System.Reflection.ConstructorInfo ci = ti.GetConstructor(new Type[1] { tis/*this.TemporaryFile.GetType()*//*, true.GetType()*/});
 
-                    StreamOfBaseFile = new System.IO.FileStream(this.TemporaryFile, System.IO.FileMode.Open, System.IO.FileAccess.Read);
+                    if (this.ClassConstructors != null && ClassConstructors.Count() > 0)
+                    {
+                        this.ClassConstructors[0].Invoke(new object[3] { this.StreamOfBaseFile, this.TemporaryFileStream, true });
+                    }
+                    else
+                    {
+                        Console.WriteLine("Файлы поврежены. Неудалось загрузить из сбоки {0} тип {1}", this.AssemblyConstructorType.Module.FullyQualifiedName, this.AssemblyConstructorType.FullName);
+                        throw new Exception();
+                    }
+                    ///---------------------------------------------------
+                    /// Проверка изменения пути к файлу и удаление отосланного, если он был переписан в новый
+                    ///
+                    
+                    if (this.TemporaryFileStream.Length == 0)
+                    {
+                        if (System.IO.File.Exists(this.TemporaryFile))
+                        {
+                            this.TemporaryFileStream.Close();
+                            System.IO.File.Delete(this.TemporaryFile);
+                            this.NotTempFile = true;
+                        }
+                        this.TemporaryFile = path;
+                    }
+                    this.TemporaryFileStream.Flush();
+                    this.StreamOfBaseFile.Flush();
+                    this.TemporaryFileStream.Close();
+                    this.StreamOfBaseFile.Close();
+
+                    this.StreamOfBaseFile = new System.IO.FileStream(this.TemporaryFile, System.IO.FileMode.Open, System.IO.FileAccess.Read);
                 }
-                catch
+                catch (System.IO.IOException)
                 {
-                    Console.WriteLine("Невозможно получить доступ к файлу: " + this.TemporaryFile/*path*/);
+                    Console.WriteLine("Невозможно получить доступ к файлу: " + path);
                     Console.WriteLine("Продолжить работу с ошибкой [y/n]");
                     var KeyPressed = Console.ReadKey().KeyChar;
                     if (KeyPressed == 'y' || KeyPressed == 'Y')
@@ -171,7 +215,7 @@ namespace ar
                     }
                 }
                 
-                MakeFileInArchive(path, BinFileWriter);
+                MakeFileInArchive(path, this.TemporaryFile, BinFileWriter);
 
                 /// <summary>
                 /// Чтение файла из потока StreamOfBaseFile
@@ -179,33 +223,27 @@ namespace ar
                 /// Количество выделяемых байт под буффер должно определяться автоматически,
                 /// в зависимости от количества доступной оперативной памяти
                 /// </summary>
-
-                if (StreamOfBaseFile.Length == new System.IO.FileInfo(path).Length)
+                
+                for (this.Byte_Buff = 0; this.StreamOfBaseFile.Position < this.StreamOfBaseFile.Length;)
                 {
-                    for (this.Byte_Buff = 0; StreamOfBaseFile.Position < StreamOfBaseFile.Length;)
-                    {
-                        this.Byte_Buff = (byte)StreamOfBaseFile.ReadByte();
-                        BinFileWriter.Write(this.Byte_Buff);
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Размер временного файла != размеру исходного файла");
+                    this.Byte_Buff = (byte)this.StreamOfBaseFile.ReadByte();
+                    BinFileWriter.Write(this.Byte_Buff);
                 }
 
-                StreamOfBaseFile.Close();
+                this.StreamOfBaseFile.Close();
 
                 ///
                 /// Удаление временного файла
                 ///
-                if (System.IO.File.Exists(this.TemporaryFile))
+                if (System.IO.File.Exists(this.TemporaryFile) && !this.NotTempFile)
                 {
                     System.IO.File.Delete(this.TemporaryFile);
                 }
             }
             else
             {
-                MakeFileInArchive(path, BinFileWriter);
+                MakeFileInArchive(path, this.TemporaryFile, BinFileWriter);
+                //MakeFileInArchive(this.TemporaryFile, BinFileWriter);
                 ///
                 /// По идее кушает памяти больше чем ниже преведенный фрагмент
                 ///
@@ -231,9 +269,9 @@ namespace ar
         /// </summary>
         /// <param name="path"> Путь к файлу/папке, свединия о котором необходимо занести в архив </param>
         /// <param name="BinFileWriter"> Поток записи в архив </param>
-        public void MakeFileInArchive(string path, System.IO.BinaryWriter BinFileWriter)
+        public void MakeFileInArchive(string PathOfOriginalSource, string PathOfRealSource, System.IO.BinaryWriter BinFileWriter)
         {
-            System.IO.FileInfo FileAttrib = new System.IO.FileInfo(path);
+            System.IO.FileInfo FileAttrib = new System.IO.FileInfo(PathOfOriginalSource);
             BinFileWriter.Write('|');
             BinFileWriter.Write(this.MethodIndex);
             BinFileWriter.Write('|');
@@ -260,11 +298,21 @@ namespace ar
             }
             BinFileWriter.Write(StrBuff);
             BinFileWriter.Write('|');
-            if (System.IO.File.Exists(path))
+            if (System.IO.File.Exists(PathOfOriginalSource))
             {
+                FileAttrib = new System.IO.FileInfo(PathOfRealSource);
                 BinFileWriter.Write(FileAttrib.Length);
+                System.Console.WriteLine("Pazmer: {0}", FileAttrib.Length);
             }
             BinFileWriter.Write('|');
+        }
+        /// <summary>
+        /// Файловый поток
+        /// </summary>
+        public System.IO.FileStream StreamOfBaseFile
+        {
+            get;
+            set;
         }
         /// <summary>
         /// Строковый буфер
@@ -298,6 +346,16 @@ namespace ar
             get;
             set;
         }
+        public System.IO.FileStream TemporaryFileStream
+        {
+            get;
+            set;
+        }
+        public bool NotTempFile
+        {
+            get;
+            set;
+        }
         /// <summary>
         /// Разделитель расширения
         /// </summary>
@@ -318,6 +376,7 @@ namespace ar
         /// Стандартное название архива
         /// </summary>
         public const string DefaultArchiveName = @"Arch0.dla";
+        public const string AssemblysFolderName = "Assemblys";
         /// <summary>
         /// Путь к архиву
         /// </summary>
@@ -339,6 +398,46 @@ namespace ar
         /// автоматически определяет наиболее подходящий
         /// </summary>
         public UInt16 MethodIndex
+        {
+            get;
+            set;
+        }
+        /// <summary>
+        /// Загружаемая сборка
+        /// </summary>
+        public System.Reflection.Assembly MethodAssembly
+        {
+            get;
+            set;
+        }
+        /// <summary>
+        /// Метод из загружаемой сборки
+        /// </summary>
+        public object MethodClass
+        {
+            get;
+            set;
+        }
+        /// <summary>
+        /// Путь к сборке
+        /// </summary>
+        public string NeededAssembly
+        {
+            get;
+            set;
+        }
+        /// <summary>
+        /// Тип из сборки(класс)
+        /// </summary>
+        public System.Type AssemblyConstructorType
+        {
+            get;
+            set;
+        }
+        /// <summary>
+        /// Массив конструкторов класса
+        /// </summary>
+        public System.Reflection.ConstructorInfo[] ClassConstructors
         {
             get;
             set;

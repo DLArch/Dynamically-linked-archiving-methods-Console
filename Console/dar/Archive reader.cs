@@ -8,7 +8,6 @@ namespace dar
 {
     public class Archive_reader
     {
-        public delegate string DeCompressMethod(string path);
         /// <summary>
         /// Распаковывает архив из ArchivePath в папку DestinationPath,
         /// создавая ее если она отсутствует.
@@ -17,6 +16,8 @@ namespace dar
         /// <param name="DestinationPath"> Абсолютный/относительный путь к папке </param>
         public Archive_reader(string ArchivePath, string DestinationPath)
         {
+            this.WorkFolderPath = System.Environment.CurrentDirectory;
+
             if (!System.IO.Directory.Exists(System.Environment.CurrentDirectory + System.IO.Path.GetDirectoryName(Archive_reader.LogFilePath)))
             {
                 System.IO.Directory.CreateDirectory(System.Environment.CurrentDirectory + System.IO.Path.GetDirectoryName(Archive_reader.LogFilePath));
@@ -96,6 +97,10 @@ namespace dar
             /// Запись в файл
             if (!FileInfo.IsFolder)
             {
+                ///
+                /// Конкретизировать обработчик ошибок
+                /// Перехватывает пользовательские исключения
+                ///
                 try
                 {
                     /// Изменение указателя в потоке при невозможности записи в файл
@@ -125,10 +130,68 @@ namespace dar
                                 bFS.Close();
                             }
 
-                            ///
-                            /// Метод
-                            ///
+                            /// Открываем Temp file на чтение для работы метода
 
+                            using (System.IO.FileStream bFS = new System.IO.FileStream(this.TemporaryFile, System.IO.FileMode.Open, System.IO.FileAccess.Read))
+                            {
+                                ///
+                                /// Настройка пути к папке со сборками
+                                ///
+                                this.NeededAssembly = this.WorkFolderPath + System.IO.Path.DirectorySeparatorChar + AssemblysFolderName + System.IO.Path.DirectorySeparatorChar + @"M" + this.Method + @".dll";
+
+                                ///
+                                /// Загрузка сборки сборки
+                                ///
+                                try
+                                {
+                                    if (System.IO.File.Exists(this.NeededAssembly))
+                                    {
+                                        this.MethodAssembly = System.Reflection.Assembly.LoadFile(this.NeededAssembly);
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Файл отсутствуeт: {1} Переустановите программу!", this.NeededAssembly);
+                                        throw new Exception();
+                                    }
+                                }
+                                catch
+                                {
+                                    Console.WriteLine("Сборка {0} повреждена. Загрузите ее заново!", this.NeededAssembly);
+                                    throw new Exception();
+                                }
+
+                                /// TDOD: Проанализировать возможность выполнения через System.AppDomain.CurrentDomain.ExecuteAssembly
+                                /// Без загрузки в текуший домен
+                                ///
+                                ///---------------------------------------------------
+                                ///
+                                /// Вытаскивание конструкторов из класса и вызов 0ого.
+                                /// TODO: Конкретизировать выбор конструктора
+                                ///
+                                this.AssemblyConstructorType = this.MethodAssembly.GetType("Method.Method");
+                                this.ClassConstructors = this.AssemblyConstructorType.GetConstructors();
+                                //System.Reflection.ConstructorInfo ci = ti.GetConstructor(new Type[1] { tis/*this.TemporaryFile.GetType()*//*, true.GetType()*/});
+
+                                using (System.IO.FileStream DestinationFileStream = new System.IO.FileStream(System.Environment.CurrentDirectory + FileInfo.PathModifier(Path), System.IO.FileMode.Open, System.IO.FileAccess.Write))
+                                {
+                                    if (this.ClassConstructors != null && ClassConstructors.Count() > 0)
+                                    {
+                                        this.ClassConstructors[0].Invoke(new object[3] { bFS, DestinationFileStream, false });
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine("Файлы поврежены. Неудалось загрузить из сбоки {0} тип {1}", this.AssemblyConstructorType.Module.FullyQualifiedName, this.AssemblyConstructorType.FullName);
+                                        throw new Exception();
+                                    }
+                                    DestinationFileStream.Close();
+                                }
+                                bFS.Close();
+                            }
+
+                            ///
+                            /// Старое чтение
+                            ///
+                            /*
                             using (System.IO.FileStream bFS = new System.IO.FileStream(System.Environment.CurrentDirectory + FileInfo.PathModifier(Path), System.IO.FileMode.Open, System.IO.FileAccess.Write))
                             {
                                 using (System.IO.BinaryReader brFS = new System.IO.BinaryReader(new System.IO.FileStream(this.TemporaryFile, System.IO.FileMode.Open, System.IO.FileAccess.Read)))
@@ -142,6 +205,8 @@ namespace dar
                                 }
                                 bFS.Close();
                             }
+                            */
+
                             if (System.IO.File.Exists(this.TemporaryFile))
                             {
                                 System.IO.File.Delete(this.TemporaryFile);
@@ -174,6 +239,31 @@ namespace dar
             {
                 MakeFileFromArchive(Path, BinFileReader, FileInfo);
             }
+        }
+        public string NeededAssembly
+        {
+            get;
+            set;
+        }
+        public System.Reflection.Assembly MethodAssembly
+        {
+            get;
+            set;
+        }
+        public System.Type AssemblyConstructorType
+        {
+            get;
+            set;
+        }
+        public System.Reflection.ConstructorInfo[] ClassConstructors
+        {
+            get;
+            set;
+        }
+        public string WorkFolderPath
+        {
+            get;
+            set;
         }
         /// <summary>
         /// Путь к временной папке
@@ -221,5 +311,6 @@ namespace dar
         /// </summary>
         public const char FileNameDelim = '|';
         public const string LogFilePath = @"\Logs\Log.dlal";
+        public const string AssemblysFolderName = @"Assemblys";
     }
 }
