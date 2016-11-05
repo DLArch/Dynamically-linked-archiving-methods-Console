@@ -126,6 +126,8 @@ namespace ar
                 return;
             }
 
+            this.NotTempFile = false;
+
             if (System.IO.File.Exists(path))
             {
                 try
@@ -137,7 +139,8 @@ namespace ar
                     /// Запись основного файла во временный(требования выбранной стратегии безопасности).
                     ///
                     this.StreamOfBaseFile = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read);
-                    System.IO.FileStream TempFileBaseStream = System.IO.File.Create(this.TemporaryFile);
+                    this.TemporaryFileStream = System.IO.File.Create(this.TemporaryFile);
+                    /*System.IO.FileStream TempFileBaseStream = System.IO.File.Create(this.TemporaryFile);
                     System.IO.BinaryWriter TempFileWriteStream = new System.IO.BinaryWriter(TempFileBaseStream);
                     
                     for (this.Byte_Buff = 0; this.StreamOfBaseFile.Position < this.StreamOfBaseFile.Length;)
@@ -148,8 +151,8 @@ namespace ar
 
                     TempFileWriteStream.Close();
                     TempFileBaseStream.Close();
-
-                    NeededAssembly = System.Environment.CurrentDirectory + System.IO.Path.DirectorySeparatorChar + AssemblysFolderName + System.IO.Path.DirectorySeparatorChar + @"M" + this.MethodIndex + @".dll";
+                    */
+                    this.NeededAssembly = System.Environment.CurrentDirectory + System.IO.Path.DirectorySeparatorChar + AssemblysFolderName + System.IO.Path.DirectorySeparatorChar + @"M" + this.MethodIndex + @".dll";
 
                     /*if (System.AppDomain.CurrentDomain.GetAssemblies().ToList().Exists(x => x.Location == this.NeededAssembly))
                     {*/
@@ -176,8 +179,6 @@ namespace ar
                         throw new Exception();
                     }
 
-                    this.StrBuff = this.TemporaryFile;
-
                     /// TDOD: Проанализировать возможность выполнения через System.AppDomain.CurrentDomain.ExecuteAssembly
                     /// Без загрузки в текуший домен
                     ///
@@ -197,7 +198,7 @@ namespace ar
 
                     if (this.ClassConstructors != null && ClassConstructors.Count() > 0)
                     {
-                        this.ClassConstructors[0].Invoke(new object[2] { this.TemporaryFile, true });
+                        this.ClassConstructors[0].Invoke(new object[3] { this.StreamOfBaseFile, this.TemporaryFileStream, true });
                     }
                     else
                     {
@@ -206,11 +207,20 @@ namespace ar
                     }
                     ///---------------------------------------------------
                     /// Проверка изменения пути к файлу и удаление отосланного, если он был переписан в новый
-                    if (this.StrBuff != this.TemporaryFile && System.IO.File.Exists(this.StrBuff))
+                    ///
+                    
+                    if (this.TemporaryFileStream.Length == 0)
                     {
-                        System.IO.File.Delete(this.StrBuff);
+                        if (System.IO.File.Exists(this.TemporaryFile))
+                        {
+                            this.TemporaryFileStream.Close();
+                            System.IO.File.Delete(this.TemporaryFile);
+                            this.NotTempFile = true;
+                        }
+                        this.TemporaryFile = path;
                     }
-                    //}
+                    this.TemporaryFileStream.Close();
+                    this.StreamOfBaseFile.Close();
 
                     this.StreamOfBaseFile = new System.IO.FileStream(this.TemporaryFile, System.IO.FileMode.Open, System.IO.FileAccess.Read);
                 }
@@ -258,7 +268,7 @@ namespace ar
                 ///
                 /// Удаление временного файла
                 ///
-                if (System.IO.File.Exists(this.TemporaryFile))
+                if (System.IO.File.Exists(this.TemporaryFile) && !this.NotTempFile)
                 {
                     System.IO.File.Delete(this.TemporaryFile);
                 }
@@ -362,6 +372,16 @@ namespace ar
         /// Имя временного файла во временной папке
         /// </summary>
         public string TemporaryFile
+        {
+            get;
+            set;
+        }
+        public System.IO.FileStream TemporaryFileStream
+        {
+            get;
+            set;
+        }
+        public bool NotTempFile
         {
             get;
             set;
