@@ -3,7 +3,6 @@ using System.Linq;
 
 namespace ar
 {
-    public delegate string CompressMethod(string path);
     public class Archive_creator
     {
         /// <summary>
@@ -132,40 +131,18 @@ namespace ar
             {
                 try
                 {
-                    //this.TemporaryFile = this.TemporaryFolder + System.IO.Path.DirectorySeparatorChar + System.IO.Path.GetFileName(path);
                     this.TemporaryFile = System.IO.Path.GetTempFileName();
-                    ///
-                    /// Проверить место на диске --- TODO
-                    /// Запись основного файла во временный(требования выбранной стратегии безопасности).
-                    ///
+
                     this.StreamOfBaseFile = new System.IO.FileStream(path, System.IO.FileMode.Open, System.IO.FileAccess.Read);
                     this.TemporaryFileStream = System.IO.File.Create(this.TemporaryFile);
-                    /*System.IO.FileStream TempFileBaseStream = System.IO.File.Create(this.TemporaryFile);
-                    System.IO.BinaryWriter TempFileWriteStream = new System.IO.BinaryWriter(TempFileBaseStream);
-                    
-                    for (this.Byte_Buff = 0; this.StreamOfBaseFile.Position < this.StreamOfBaseFile.Length;)
-                    {
-                        this.Byte_Buff = (byte)this.StreamOfBaseFile.ReadByte();
-                        TempFileWriteStream.Write(this.Byte_Buff);
-                    }
 
-                    TempFileWriteStream.Close();
-                    TempFileBaseStream.Close();
-                    */
                     this.NeededAssembly = System.Environment.CurrentDirectory + System.IO.Path.DirectorySeparatorChar + AssemblysFolderName + System.IO.Path.DirectorySeparatorChar + @"M" + this.MethodIndex + @".dll";
-
-                    /*if (System.AppDomain.CurrentDomain.GetAssemblies().ToList().Exists(x => x.Location == this.NeededAssembly))
-                    {*/
+                    
                     try
                     {
                         if (System.IO.File.Exists(this.NeededAssembly))
                         {
-                            /*self.Current_Dll_Loaded:= System.Reflection.Assembly.LoadFile(self._dllWay);
-                            self.ob_func:= System.Activator.CreateInstance(self.Current_Dll_Loaded.GetType('func_My.nc'));
-                            fn_my:= (mass_my_for_func)(self.Current_Dll_Loaded.GetType('func_My.nc').GetMethod('func_').Invoke(self.ob_func, new object[1](1)));*/
-
                             this.MethodAssembly = System.Reflection.Assembly.LoadFile(this.NeededAssembly);
-                            //this.MethodClass = System.Activator.CreateInstance(MethodAssembly.GetType("Method"), new Type[2] {Type.GetType("string"), Type.GetType("bool")});
                         }
                         else
                         {
@@ -182,8 +159,6 @@ namespace ar
                     /// TDOD: Проанализировать возможность выполнения через System.AppDomain.CurrentDomain.ExecuteAssembly
                     /// Без загрузки в текуший домен
                     ///
-                    /// Вызов делегата для this.TemporaryFile. 
-                    ///
                     ///---------------------------------------------------
                     ///
                     /// Вытаскивание конструкторов из класса и вызов 0ого.
@@ -192,9 +167,6 @@ namespace ar
                     this.AssemblyConstructorType = this.MethodAssembly.GetType("Method.Method");
                     this.ClassConstructors = this.AssemblyConstructorType.GetConstructors();
                     //System.Reflection.ConstructorInfo ci = ti.GetConstructor(new Type[1] { tis/*this.TemporaryFile.GetType()*//*, true.GetType()*/});
-
-                    /// Чет плохо вызывается
-                    /// Как минимум ref параметр не возвращается
 
                     if (this.ClassConstructors != null && ClassConstructors.Count() > 0)
                     {
@@ -219,6 +191,8 @@ namespace ar
                         }
                         this.TemporaryFile = path;
                     }
+                    this.TemporaryFileStream.Flush();
+                    this.StreamOfBaseFile.Flush();
                     this.TemporaryFileStream.Close();
                     this.StreamOfBaseFile.Close();
 
@@ -241,7 +215,7 @@ namespace ar
                     }
                 }
                 
-                MakeFileInArchive(path, BinFileWriter);
+                MakeFileInArchive(path, this.TemporaryFile, BinFileWriter);
 
                 /// <summary>
                 /// Чтение файла из потока StreamOfBaseFile
@@ -249,18 +223,11 @@ namespace ar
                 /// Количество выделяемых байт под буффер должно определяться автоматически,
                 /// в зависимости от количества доступной оперативной памяти
                 /// </summary>
-
-                if (this.StreamOfBaseFile.Length == new System.IO.FileInfo(path).Length)
+                
+                for (this.Byte_Buff = 0; this.StreamOfBaseFile.Position < this.StreamOfBaseFile.Length;)
                 {
-                    for (this.Byte_Buff = 0; this.StreamOfBaseFile.Position < this.StreamOfBaseFile.Length;)
-                    {
-                        this.Byte_Buff = (byte)this.StreamOfBaseFile.ReadByte();
-                        BinFileWriter.Write(this.Byte_Buff);
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("Размер временного файла != размеру исходного файла");
+                    this.Byte_Buff = (byte)this.StreamOfBaseFile.ReadByte();
+                    BinFileWriter.Write(this.Byte_Buff);
                 }
 
                 this.StreamOfBaseFile.Close();
@@ -275,7 +242,8 @@ namespace ar
             }
             else
             {
-                MakeFileInArchive(path, BinFileWriter);
+                MakeFileInArchive(path, this.TemporaryFile, BinFileWriter);
+                //MakeFileInArchive(this.TemporaryFile, BinFileWriter);
                 ///
                 /// По идее кушает памяти больше чем ниже преведенный фрагмент
                 ///
@@ -301,9 +269,9 @@ namespace ar
         /// </summary>
         /// <param name="path"> Путь к файлу/папке, свединия о котором необходимо занести в архив </param>
         /// <param name="BinFileWriter"> Поток записи в архив </param>
-        public void MakeFileInArchive(string path, System.IO.BinaryWriter BinFileWriter)
+        public void MakeFileInArchive(string PathOfOriginalSource, string PathOfRealSource, System.IO.BinaryWriter BinFileWriter)
         {
-            System.IO.FileInfo FileAttrib = new System.IO.FileInfo(path);
+            System.IO.FileInfo FileAttrib = new System.IO.FileInfo(PathOfOriginalSource);
             BinFileWriter.Write('|');
             BinFileWriter.Write(this.MethodIndex);
             BinFileWriter.Write('|');
@@ -330,9 +298,11 @@ namespace ar
             }
             BinFileWriter.Write(StrBuff);
             BinFileWriter.Write('|');
-            if (System.IO.File.Exists(path))
+            if (System.IO.File.Exists(PathOfOriginalSource))
             {
+                FileAttrib = new System.IO.FileInfo(PathOfRealSource);
                 BinFileWriter.Write(FileAttrib.Length);
+                System.Console.WriteLine("Pazmer: {0}", FileAttrib.Length);
             }
             BinFileWriter.Write('|');
         }

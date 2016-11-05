@@ -8,7 +8,6 @@ namespace dar
 {
     public class Archive_reader
     {
-        public delegate string DeCompressMethod(string path);
         /// <summary>
         /// Распаковывает архив из ArchivePath в папку DestinationPath,
         /// создавая ее если она отсутствует.
