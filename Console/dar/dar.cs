@@ -21,7 +21,7 @@ namespace dar
                     System.IO.Directory.CreateDirectory(args[1]);
                     System.Threading.Tasks.Task Methods = new System.Threading.Tasks.Task(() =>
                     {
-                        Archive_reader buff = new Archive_reader(args[0], args[1]);
+                        DLA.Archive_reader buff = new DLA.Archive_reader(args[0], args[1]);
                     });
                     Methods.Start();
                     Methods.Wait();

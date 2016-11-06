@@ -33,6 +33,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="DLA">
+      <HintPath>..\..\..\Framework\DLA\bin\Debug\DLA.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -43,8 +46,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Archive reader.cs" />
-    <Compile Include="BufferedFileInfo.cs" />
     <Compile Include="dar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
