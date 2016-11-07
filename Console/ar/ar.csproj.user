@@ -11,6 +11,14 @@
     <VerifyUploadedFiles>false</VerifyUploadedFiles>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+<<<<<<< HEAD
     <StartArguments>C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console arch.dla</StartArguments>
+=======
+<<<<<<< HEAD
+    <StartArguments>C:\Users\Oleg\Documents\GitHub arch</StartArguments>
+=======
+    <StartArguments>C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console arch.dla</StartArguments>
+>>>>>>> Main
+>>>>>>> Test/Fix
   </PropertyGroup>
 </Project>

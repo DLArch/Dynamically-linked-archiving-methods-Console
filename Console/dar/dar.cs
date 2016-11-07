@@ -21,14 +21,22 @@ namespace dar
                     System.IO.Directory.CreateDirectory(args[1]);
                     System.Threading.Tasks.Task Methods = new System.Threading.Tasks.Task(() =>
                     {
-                        Archive_reader buff = new Archive_reader(args[0], args[1]);
+                        DLA.Archive_reader buff = new DLA.Archive_reader(args[0], args[1]);
                     });
                     Methods.Start();
                     Methods.Wait();
 
                     StartTime = Environment.TickCount - StartTime;
 
+<<<<<<< HEAD
                     Console.WriteLine("С момента начала архивации прошло {0}min {1}sec {2}ms", (int)(StartTime / 60000), (int)((StartTime % 60000) / 1000), StartTime % 1000);
+=======
+<<<<<<< HEAD
+                    Console.WriteLine("С момента начала разархивации прошло {0}min {1}sec {2}ms", (int)(StartTime / 60000), (int)((StartTime % 60000) / 1000), StartTime % 1000);
+=======
+                    Console.WriteLine("С момента начала архивации прошло {0}min {1}sec {2}ms", (int)(StartTime / 60000), (int)((StartTime % 60000) / 1000), StartTime % 1000);
+>>>>>>> Main
+>>>>>>> Test/Fix
 
                     Console.ReadKey();
                 }
