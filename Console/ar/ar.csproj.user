@@ -12,9 +12,19 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+    <StartArguments>C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console arch.dla</StartArguments>
+=======
+<<<<<<< HEAD
+>>>>>>> Main
     <StartArguments>C:\Users\Oleg\Documents\GitHub arch</StartArguments>
 =======
     <StartArguments>C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console arch.dla</StartArguments>
+>>>>>>> Main
+<<<<<<< HEAD
+=======
+>>>>>>> Test/Fix
 >>>>>>> Main
   </PropertyGroup>
 </Project>
