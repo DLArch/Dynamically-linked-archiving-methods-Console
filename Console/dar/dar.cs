@@ -29,14 +29,20 @@ namespace dar
                     StartTime = Environment.TickCount - StartTime;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
                     Console.WriteLine("С момента начала архивации прошло {0}min {1}sec {2}ms", (int)(StartTime / 60000), (int)((StartTime % 60000) / 1000), StartTime % 1000);
 =======
 <<<<<<< HEAD
+>>>>>>> Main
                     Console.WriteLine("С момента начала разархивации прошло {0}min {1}sec {2}ms", (int)(StartTime / 60000), (int)((StartTime % 60000) / 1000), StartTime % 1000);
 =======
                     Console.WriteLine("С момента начала архивации прошло {0}min {1}sec {2}ms", (int)(StartTime / 60000), (int)((StartTime % 60000) / 1000), StartTime % 1000);
 >>>>>>> Main
+<<<<<<< HEAD
+=======
 >>>>>>> Test/Fix
+>>>>>>> Main
 
                     Console.ReadKey();
                 }

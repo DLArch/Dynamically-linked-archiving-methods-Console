@@ -11,9 +11,15 @@ C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Cons
 C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\dla\obj\Debug\dla.exe
 C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\dla\obj\Debug\dla.pdb
 <<<<<<< HEAD
+<<<<<<< HEAD
+C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\dla\obj\Debug\dla.csprojResolveAssemblyReference.cache
+=======
+>>>>>>> Main
+=======
 =======
 <<<<<<< HEAD
 C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\dla\obj\Debug\dla.csprojResolveAssemblyReference.cache
 =======
 >>>>>>> Main
 >>>>>>> Test/Fix
+>>>>>>> Main
