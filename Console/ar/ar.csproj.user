@@ -11,6 +11,6 @@
     <VerifyUploadedFiles>false</VerifyUploadedFiles>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
-    <StartArguments>C:\Users\Oleg\Desktop\Dev-Cpp\MinGW64\bin\lib\email arch.dla</StartArguments>
+    <StartArguments>C:\Users\Oleg\Desktop\Test%2820161118%29 C:\Users\Oleg\Desktop\Test%2820161118%29\archtest.dla 0</StartArguments>
   </PropertyGroup>
 </Project>

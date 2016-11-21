@@ -18,10 +18,3 @@ C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console-Main
 C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console-Main\Console\ar\bin\Debug\ar.exe
 C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console-Main\Console\ar\bin\Debug\ar.pdb
 C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console-Main\Console\ar\obj\Debug\ar.csprojResolveAssemblyReference.cache
-C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\ar\bin\Debug\ar.exe.config
-C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\ar\bin\Debug\ar.exe
-C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\ar\bin\Debug\ar.pdb
-C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\ar\bin\Debug\DLA.dll
-C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\ar\bin\Debug\DLA.pdb
-C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\ar\obj\Debug\ar.exe
-C:\Users\Oleg\Documents\GitHub\Dynamically-linked-archiving-methods-Console\Console\ar\obj\Debug\ar.pdb

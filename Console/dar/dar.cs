@@ -27,10 +27,8 @@ namespace dar
                     Methods.Wait();
 
                     StartTime = Environment.TickCount - StartTime;
-                    
-                    Console.WriteLine("С момента начала разархивации прошло {0}min {1}sec {2}ms", (int)(StartTime / 60000), (int)((StartTime % 60000) / 1000), StartTime % 1000);
 
-                    Console.ReadKey();
+                    Console.WriteLine("С момента начала разархивации прошло {0}min {1}sec {2}ms", (int)(StartTime / 60000), (int)((StartTime % 60000) / 1000), StartTime % 1000);
                 }
                 else
                 {
