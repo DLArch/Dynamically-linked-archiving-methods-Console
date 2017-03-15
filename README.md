@@ -14,7 +14,7 @@ Dynamically Linked Archiving Methods(DLA) - this is modern archivator for all. *
 ```
 $dla ar C:\Users C:\Archives\Archive76.dla
 ```
--- Where ```C:\Users``` - base folder for compress, ```C:\Users C:\Archives\Archive76.dla``` - archive destination.
+-- Where ```C:\Users``` - base folder for compress, ```C:\Archives\Archive76.dla``` - archive destination.
 
 * For Unzip:
 ```
